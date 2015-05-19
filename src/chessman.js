@@ -5,12 +5,12 @@ var Chessman = cc.Sprite.extend({
 	_scale:70,
 	_key:null,
 	_chess:null,
+	_color:1,    //1表示红色  -1为黑色
 	ctor:function(x, y, key){
-		this._super(img);
-
 		var pater = key.slice(0,1);
 		var o = Chessman.args[pater];
 		var img = CONFIG.style[o.img];
+		this._super(img);
 
 		this._chess = pater;
 		this._key = key;
@@ -35,7 +35,6 @@ var Chessman = cc.Sprite.extend({
 				if (cc.rectContainsPoint(rect, locationInNode)) {
 					cc.log("sprite began... x = " + locationInNode.x + ", y = " + locationInNode.y);
 					
-
 					return true;
 				}
 				return false;
@@ -50,14 +49,15 @@ var Chessman = cc.Sprite.extend({
 		cc.eventManager.addListener(listener1, this);
 	},
 	bylaw:function(){
-		var bylaw_map = Chessman.bylaw[]
+		//var bylaw_map = Chessman.bylaw[]
 	}
 });
 
 
 Chessman.create = function(x, y, key){
 	var chess = new Chessman(x, y, key);
-	g_sharedChessLayer.addChild(chess, 1, 1);
+	CONFIG.CONTAINER.CHESS[key] = chess;
+	g_sharedChessLayer.addChild(chess, 100, 100);
 	return chess;
 }
 

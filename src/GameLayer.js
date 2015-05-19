@@ -29,7 +29,7 @@ var GameLayer = cc.Layer.extend({
 		this.addChild(this._board, 1, 2);
 		g_sharedChessLayer = this._board;
 		
-		this._map = arr2Clone(Map.initMap);
+		this._map = GameLayer.arr2Clone(Map.initMap);
 		this.loadChessman(this._map);
 	},
 	loadChessman: function(map){
@@ -46,7 +46,7 @@ var GameLayer = cc.Layer.extend({
 
 
 //二维数组克隆
-Chessman.arr2Clone = function (arr){
+GameLayer.arr2Clone = function (arr){
 	var newArr=[];
 	for (var i=0; i<arr.length ; i++){	
 		newArr[i] = arr[i].slice();

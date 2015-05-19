@@ -7,3 +7,7 @@ CONFIG.start_y = 30;
 //
 CONFIG.scale = 70;
 
+
+CONFIG.CONTAINER = {
+	CHESS:{}
+};
