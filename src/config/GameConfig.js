@@ -9,5 +9,8 @@ CONFIG.scale = 70;
 
 
 CONFIG.CONTAINER = {
-	CHESS:{}
+	CHESS:{},	//保存每个棋子的精灵
+	POINT:[]	//保存每个点的精灵
 };
+
+CONFIG.CHESS_MANUAL = [];	//棋谱

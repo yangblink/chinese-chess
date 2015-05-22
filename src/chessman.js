@@ -1,223 +1,274 @@
 //象棋棋子类
 var Chessman = cc.Sprite.extend({
-	_xIndex: 0,		//在二维数组中的坐标
+	_xIndex: 0,					//在二维数组中的坐标
 	_yIndex: 0,
 	_scale:70,
 	_key:null,
 	_chess:null,
-	_color:1,    //1表示红色  -1为黑色
+	_color:1,    				//1表示红色  -1为黑色
 	ctor:function(x, y, key){
 		var pater = key.slice(0,1);
 		var o = Chessman.args[pater];
 		var img = CONFIG.style[o.img];
 		this._super(img);
 
+		//log(pater + "##" + key);
+		if(pater.match(/[A-Z]/)){
+			this._color = -1;
+		}
 		this._chess = pater;
 		this._key = key;
 		this._xIndex = x;
 		this._yIndex = y;
 
-		this.x = y * CONFIG.scale + CONFIG.start_x;
-		this.y = (9 - x) * CONFIG.scale + CONFIG.start_y;
+		this.x = x * CONFIG.scale + CONFIG.start_x;
+		this.y = (9 - y) * CONFIG.scale + CONFIG.start_y;
 
-		//this.init();
+		this.init();
 	},
 	init:function(){
+		var self = this;
 		var listener1 = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			onTouchBegan: function (touch, event) {
 				var target = event.getCurrentTarget();
-
 				var locationInNode = target.convertToNodeSpace(touch.getLocation());
 				var s = target.getContentSize();
 				var rect = cc.rect(0, 0, s.width, s.height);
-
+				//cc.log("sprite began... x = " + locationInNode.x + ", y = " + locationInNode.y);
 				if (cc.rectContainsPoint(rect, locationInNode)) {
-					cc.log("sprite began... x = " + locationInNode.x + ", y = " + locationInNode.y);
-					
+					self.onTouch();
 					return true;
 				}
 				return false;
 			},
 			onTouchMoved: function (touch, event) {
-				log("onTouchMoved");
+				//log("onTouchMoved");
 			},
 			onTouchEnded: function (touch, event) {
-				log("onTouchEnded");
+				//log("onTouchEnded");
 			}
 		});
 		cc.eventManager.addListener(listener1, this);
 	},
+	onTouch:function(){
+		if(g_sharedGmaeLayer._focus)
+		{
+			var self_coord = [this._xIndex, this._yIndex];
+			log(self_coord);
+			log(g_sharedGmaeLayer._point_map);
+			log("#####");
+			if(g_sharedGmaeLayer._point_map.some(function(item){return item.toString() == self_coord.toString()}))
+			{
+				//吃子
+				log("##eat");
+				this.visible = false;
+				var src_chess = CONFIG.CONTAINER.CHESS[g_sharedGmaeLayer._focus];
+				var actionTo = cc.moveTo(0.2, cc.p(this.x, this.y));
+				src_chess.runAction(actionTo);
+				g_sharedGmaeLayer._focus = null;
+				Chesspoint.clearPoint();
+			}
+			else
+			{
+				Chesspoint.clearPoint();
+				this.bylaw();
+				g_sharedGmaeLayer._focus = this._key;
+			}
+		}
+		else
+		{
+			Chesspoint.clearPoint();
+			this.bylaw();
+			g_sharedGmaeLayer._focus = this._key;
+		}
+	},
 	bylaw:function(){
-		//var bylaw_map = Chessman.bylaw[]
+		var pater = this._key.slice(0,1);
+		var o = Chessman.args[pater];
+		var fun = pater.toLowerCase();
+
+		var point_map = Chessman.bylaw[fun](this._xIndex, this._yIndex, this._key, g_sharedGmaeLayer._map, this._color);
+		for(var i = 0; i < point_map.length; i++){
+			var point = Chesspoint.getOrCreateChesspoint();
+			var x = point_map[i][0], y = point_map[i][1];
+			point.x =  x * CONFIG.scale + CONFIG.start_x;
+			point.y = (9 - y) * CONFIG.scale + CONFIG.start_y;
+			point.visible = true;
+			point.active = true;
+		}
+		g_sharedGmaeLayer._point_map = point_map;
 	}
 });
 
-
-Chessman.create = function(x, y, key){
-	var chess = new Chessman(x, y, key);
-	CONFIG.CONTAINER.CHESS[key] = chess;
-	g_sharedChessLayer.addChild(chess, 100, 100);
-	return chess;
+var GetColor = function(key){
+	if(CONFIG.CONTAINER.CHESS[key])
+		return CONFIG.CONTAINER.CHESS[key]._color;
+	else{
+		log("##GetColor Error :"+key);
+		return 1;
+	}
 }
-
-
 //棋子能走的着点
-Chessman.bylaw ={}
+Chessman.bylaw = {};
 //车
-Chessman.bylaw.c = function (x,y,map,my){
-	var d=[];
+Chessman.bylaw.c = function (x, y, key, map, my){
+	var d=[], i;
 	//左侧检索
-	for (var i=x-1; i>= 0; i--){
+	for (i=x-1; i>= 0; i--){
 		if (map[y][i]) {
-			if (com.mans[map[y][i]].my!=my) d.push([i,y]);
+			if (GetColor(map[y][i])!=my) 
+				d.push([i,y]);
 			break
 		}else{
-			d.push([i,y])	
+			d.push([i,y])
 		}
 	}
 	//右侧检索
-	for (var i=x+1; i <= 8; i++){
+	for (i=x+1; i <= 8; i++){
 		if (map[y][i]) {
-			if (com.mans[map[y][i]].my!=my) d.push([i,y]);
+			if (GetColor(map[y][i])!=my) 
+				d.push([i,y]);
 			break
 		}else{
 			d.push([i,y])	
 		}
 	}
 	//上检索
-	for (var i = y-1 ; i >= 0; i--){
+	for (i = y-1 ; i >= 0; i--){
 		if (map[i][x]) {
-			if (com.mans[map[i][x]].my!=my) d.push([x,i]);
+			if (GetColor(map[i][x])!=my) 
+				d.push([x,i]);
 			break
 		}else{
 			d.push([x,i])	
 		}
 	}
 	//下检索
-	for (var i = y+1 ; i<= 9; i++){
+	for (i = y+1 ; i<= 9; i++){
 		if (map[i][x]) {
-			if (com.mans[map[i][x]].my!=my) d.push([x,i]);
+			if (GetColor(map[i][x])!=my) 
+				d.push([x,i]);
 			break
 		}else{
-			d.push([x,i])	
+			d.push([x,i])
 		}
 	}
 	return d;
 }
 
 //马
-Chessman.bylaw.m = function (x,y,map,my){
+Chessman.bylaw.m = function (x, y, key, map, my){
 	var d=[];
-		//1点
-		if ( y-2>= 0 && x+1<= 8 && !play.map[y-1][x] &&(!com.mans[map[y-2][x+1]] || com.mans[map[y-2][x+1]].my!=my)) d.push([x+1,y-2]);
-		//2点
-		if ( y-1>= 0 && x+2<= 8 && !play.map[y][x+1] &&(!com.mans[map[y-1][x+2]] || com.mans[map[y-1][x+2]].my!=my)) d.push([x+2,y-1]);
-		//4点
-		if ( y+1<= 9 && x+2<= 8 && !play.map[y][x+1] &&(!com.mans[map[y+1][x+2]] || com.mans[map[y+1][x+2]].my!=my)) d.push([x+2,y+1]);
-		//5点
-		if ( y+2<= 9 && x+1<= 8 && !play.map[y+1][x] &&(!com.mans[map[y+2][x+1]] || com.mans[map[y+2][x+1]].my!=my)) d.push([x+1,y+2]);
-		//7点
-		if ( y+2<= 9 && x-1>= 0 && !play.map[y+1][x] &&(!com.mans[map[y+2][x-1]] || com.mans[map[y+2][x-1]].my!=my)) d.push([x-1,y+2]);
-		//8点
-		if ( y+1<= 9 && x-2>= 0 && !play.map[y][x-1] &&(!com.mans[map[y+1][x-2]] || com.mans[map[y+1][x-2]].my!=my)) d.push([x-2,y+1]);
-		//10点
-		if ( y-1>= 0 && x-2>= 0 && !play.map[y][x-1] &&(!com.mans[map[y-1][x-2]] || com.mans[map[y-1][x-2]].my!=my)) d.push([x-2,y-1]);
-		//11点
-		if ( y-2>= 0 && x-1>= 0 && !play.map[y-1][x] &&(!com.mans[map[y-2][x-1]] || com.mans[map[y-2][x-1]].my!=my)) d.push([x-1,y-2]);
+	//1点
+	if ( y-2>= 0 && x+1<= 8 && !map[y-1][x] &&(!map[y-2][x+1] || GetColor(map[y-2][x+1])!=my)) d.push([x+1,y-2]);
+	//2点
+	if ( y-1>= 0 && x+2<= 8 && !map[y][x+1] &&(!map[y-1][x+2] || GetColor(map[y-1][x+2])!=my)) d.push([x+2,y-1]);
+	//4点
+	if ( y+1<= 9 && x+2<= 8 && !map[y][x+1] &&(!map[y+1][x+2] || GetColor(map[y+1][x+2])!=my)) d.push([x+2,y+1]);
+	//5点
+	if ( y+2<= 9 && x+1<= 8 && !map[y+1][x] &&(!map[y+2][x+1] || GetColor(map[y+2][x+1])!=my)) d.push([x+1,y+2]);
+	//7点
+	if ( y+2<= 9 && x-1>= 0 && !map[y+1][x] &&(!map[y+2][x-1] || GetColor(map[y+2][x-1])!=my)) d.push([x-1,y+2]);
+	//8点
+	if ( y+1<= 9 && x-2>= 0 && !map[y][x-1] &&(!map[y+1][x-2] || GetColor(map[y+1][x-2])!=my)) d.push([x-2,y+1]);
+	//10点
+	if ( y-1>= 0 && x-2>= 0 && !map[y][x-1] &&(!map[y-1][x-2] || GetColor(map[y-1][x-2])!=my)) d.push([x-2,y-1]);
+	//11点
+	if ( y-2>= 0 && x-1>= 0 && !map[y-1][x] &&(!map[y-2][x-1] || GetColor(map[y-2][x-1])!=my)) d.push([x-1,y-2]);
 
 	return d;
 }
 
 //相
-Chessman.bylaw.x = function (x,y,map,my){
+Chessman.bylaw.x = function (x, y, key, map, my){
 	var d=[];
 	if (my===1){ //红方
 		//4点半
-		if ( y+2<= 9 && x+2<= 8 && !play.map[y+1][x+1] && (!com.mans[map[y+2][x+2]] || com.mans[map[y+2][x+2]].my!=my)) d.push([x+2,y+2]);
+		if ( y+2<= 9 && x+2<= 8 && !map[y+1][x+1] && (!map[y+2][x+2] || GetColor(map[y+2][x+2])!=my)) d.push([x+2,y+2]);
 		//7点半
-		if ( y+2<= 9 && x-2>= 0 && !play.map[y+1][x-1] && (!com.mans[map[y+2][x-2]] || com.mans[map[y+2][x-2]].my!=my)) d.push([x-2,y+2]);
+		if ( y+2<= 9 && x-2>= 0 && !map[y+1][x-1] && (!map[y+2][x-2] || GetColor(map[y+2][x-2])!=my)) d.push([x-2,y+2]);
 		//1点半
-		if ( y-2>= 5 && x+2<= 8 && !play.map[y-1][x+1] && (!com.mans[map[y-2][x+2]] || com.mans[map[y-2][x+2]].my!=my)) d.push([x+2,y-2]);
+		if ( y-2>= 5 && x+2<= 8 && !map[y-1][x+1] && (!map[y-2][x+2] || GetColor(map[y-2][x+2])!=my)) d.push([x+2,y-2]);
 		//10点半
-		if ( y-2>= 5 && x-2>= 0 && !play.map[y-1][x-1] && (!com.mans[map[y-2][x-2]] || com.mans[map[y-2][x-2]].my!=my)) d.push([x-2,y-2]);
+		if ( y-2>= 5 && x-2>= 0 && !map[y-1][x-1] && (!map[y-2][x-2] || GetColor(map[y-2][x-2])!=my)) d.push([x-2,y-2]);
 	}else{
 		//4点半
-		if ( y+2<= 4 && x+2<= 8 && !play.map[y+1][x+1] && (!com.mans[map[y+2][x+2]] || com.mans[map[y+2][x+2]].my!=my)) d.push([x+2,y+2]);
+		if ( y+2<= 4 && x+2<= 8 && !map[y+1][x+1] && (!map[y+2][x+2] || GetColor(map[y+2][x+2])!=my)) d.push([x+2,y+2]);
 		//7点半
-		if ( y+2<= 4 && x-2>= 0 && !play.map[y+1][x-1] && (!com.mans[map[y+2][x-2]] || com.mans[map[y+2][x-2]].my!=my)) d.push([x-2,y+2]);
+		if ( y+2<= 4 && x-2>= 0 && !map[y+1][x-1] && (!map[y+2][x-2] || GetColor(map[y+2][x-2])!=my)) d.push([x-2,y+2]);
 		//1点半
-		if ( y-2>= 0 && x+2<= 8 && !play.map[y-1][x+1] && (!com.mans[map[y-2][x+2]] || com.mans[map[y-2][x+2]].my!=my)) d.push([x+2,y-2]);
+		if ( y-2>= 0 && x+2<= 8 && !map[y-1][x+1] && (!map[y-2][x+2] || GetColor(map[y-2][x+2])!=my)) d.push([x+2,y-2]);
 		//10点半
-		if ( y-2>= 0 && x-2>= 0 && !play.map[y-1][x-1] && (!com.mans[map[y-2][x-2]] || com.mans[map[y-2][x-2]].my!=my)) d.push([x-2,y-2]);
+		if ( y-2>= 0 && x-2>= 0 && !map[y-1][x-1] && (!map[y-2][x-2] || GetColor(map[y-2][x-2])!=my)) d.push([x-2,y-2]);
 	}
 	return d;
 }
 
 //士
-Chessman.bylaw.s = function (x,y,map,my){
+Chessman.bylaw.s = function (x, y, key, map, my){
 	var d=[];
 	if (my===1){ //红方
 		//4点半
-		if ( y+1<= 9 && x+1<= 5 && (!com.mans[map[y+1][x+1]] || com.mans[map[y+1][x+1]].my!=my)) d.push([x+1,y+1]);
+		if ( y+1<= 9 && x+1<= 5 && (!map[y+1][x+1] || GetColor(map[y+1][x+1])!=my)) d.push([x+1,y+1]);
 		//7点半
-		if ( y+1<= 9 && x-1>= 3 && (!com.mans[map[y+1][x-1]] || com.mans[map[y+1][x-1]].my!=my)) d.push([x-1,y+1]);
+		if ( y+1<= 9 && x-1>= 3 && (!map[y+1][x-1] || GetColor(map[y+1][x-1])!=my)) d.push([x-1,y+1]);
 		//1点半
-		if ( y-1>= 7 && x+1<= 5 && (!com.mans[map[y-1][x+1]] || com.mans[map[y-1][x+1]].my!=my)) d.push([x+1,y-1]);
+		if ( y-1>= 7 && x+1<= 5 && (!map[y-1][x+1] || GetColor(map[y-1][x+1])!=my)) d.push([x+1,y-1]);
 		//10点半
-		if ( y-1>= 7 && x-1>= 3 && (!com.mans[map[y-1][x-1]] || com.mans[map[y-1][x-1]].my!=my)) d.push([x-1,y-1]);
+		if ( y-1>= 7 && x-1>= 3 && (!map[y-1][x-1] || GetColor(map[y-1][x-1])!=my)) d.push([x-1,y-1]);
 	}else{
 		//4点半
-		if ( y+1<= 2 && x+1<= 5 && (!com.mans[map[y+1][x+1]] || com.mans[map[y+1][x+1]].my!=my)) d.push([x+1,y+1]);
+		if ( y+1<= 2 && x+1<= 5 && (!map[y+1][x+1] || GetColor(map[y+1][x+1])!=my)) d.push([x+1,y+1]);
 		//7点半
-		if ( y+1<= 2 && x-1>= 3 && (!com.mans[map[y+1][x-1]] || com.mans[map[y+1][x-1]].my!=my)) d.push([x-1,y+1]);
+		if ( y+1<= 2 && x-1>= 3 && (!map[y+1][x-1] || GetColor(map[y+1][x-1])!=my)) d.push([x-1,y+1]);
 		//1点半
-		if ( y-1>= 0 && x+1<= 5 && (!com.mans[map[y-1][x+1]] || com.mans[map[y-1][x+1]].my!=my)) d.push([x+1,y-1]);
+		if ( y-1>= 0 && x+1<= 5 && (!map[y-1][x+1] || GetColor(map[y-1][x+1])!=my)) d.push([x+1,y-1]);
 		//10点半
-		if ( y-1>= 0 && x-1>= 3 && (!com.mans[map[y-1][x-1]] || com.mans[map[y-1][x-1]].my!=my)) d.push([x-1,y-1]);
+		if ( y-1>= 0 && x-1>= 3 && (!map[y-1][x-1] || GetColor(map[y-1][x-1])!=my)) d.push([x-1,y-1]);
 	}
 	return d;
 		
 }
 
 //将
-Chessman.bylaw.j = function (x,y,map,my){
+Chessman.bylaw.j = function (x, y, key, map, my){
 	var d=[];
-	var isNull=(function (y1,y2){
-		var y1=com.mans["j0"].y;
-		var x1=com.mans["J0"].x;
-		var y2=com.mans["J0"].y;
-		for (var i=y1-1; i>y2; i--){
-			if (map[i][x1]) return false;
-		}
-		return true;
-	})();
+	// var isNull=(function (y1,y2){
+	// 	var y1=com.mans["j0"].y;
+	// 	var x1=com.mans["J0"].x;
+	// 	var y2=com.mans["J0"].y;
+	// 	for (var i=y1-1; i>y2; i--){
+	// 		if (map[i][x1]) return false;
+	// 	}
+	// 	return true;
+	// })();
 	
 	if (my===1){ //红方
 		//下
-		if ( y+1<= 9  && (!com.mans[map[y+1][x]] || com.mans[map[y+1][x]].my!=my)) d.push([x,y+1]);
+		if ( y+1<= 9  && (!map[y+1][x] || GetColor(map[y+1][x])!=my)) d.push([x,y+1]);
 		//上
-		if ( y-1>= 7 && (!com.mans[map[y-1][x]] || com.mans[map[y-1][x]].my!=my)) d.push([x,y-1]);
+		if ( y-1>= 7 && (!map[y-1][x] || GetColor(map[y-1][x])!=my)) d.push([x,y-1]);
 		//老将对老将的情况
-		if ( com.mans["j0"].x == com.mans["J0"].x &&isNull) d.push([com.mans["J0"].x,com.mans["J0"].y]);
+		//if ( com.mans["j0"].x == com.mans["J0"].x &&isNull) d.push([com.mans["J0"].x,com.mans["J0"].y]);
 		
 	}else{
 		//下
-		if ( y+1<= 2  && (!com.mans[map[y+1][x]] || com.mans[map[y+1][x]].my!=my)) d.push([x,y+1]);
+		if ( y+1<= 2  && (!map[y+1][x] || GetColor(map[y+1][x])!=my)) d.push([x,y+1]);
 		//上
-		if ( y-1>= 0 && (!com.mans[map[y-1][x]] || com.mans[map[y-1][x]].my!=my)) d.push([x,y-1]);
+		if ( y-1>= 0 && (!map[y-1][x] || GetColor(map[y-1][x])!=my)) d.push([x,y-1]);
 		//老将对老将的情况
-		if ( com.mans["j0"].x == com.mans["J0"].x &&isNull) d.push([com.mans["j0"].x,com.mans["j0"].y]);
+		//if ( com.mans["j0"].x == com.mans["J0"].x &&isNull) d.push([com.mans["j0"].x,com.mans["j0"].y]);
 	}
 	//右
-	if ( x+1<= 5  && (!com.mans[map[y][x+1]] || com.mans[map[y][x+1]].my!=my)) d.push([x+1,y]);
+	if ( x+1<= 5  && (!map[y][x+1] || GetColor(map[y][x+1])!=my)) d.push([x+1,y]);
 	//左
-	if ( x-1>= 3 && (!com.mans[map[y][x-1]] || com.mans[map[y][x-1]].my!=my))d.push([x-1,y]);
+	if ( x-1>= 3 && (!map[y][x-1] || GetColor(map[y][x-1])!=my)) d.push([x-1,y]);
 	return d;
 }
 
 //炮
-Chessman.bylaw.p = function (x,y,map,my){
+Chessman.bylaw.p = function (x, y, key, map, my){
 	var d=[];
 	//左侧检索
 	var n=0;
@@ -227,7 +278,7 @@ Chessman.bylaw.p = function (x,y,map,my){
 				n++;
 				continue;
 			}else{
-				if (com.mans[map[y][i]].my!=my) d.push([i,y]);
+				if (GetColor(map[y][i])!=my) d.push([i,y]);
 				break	
 			}
 		}else{
@@ -242,7 +293,7 @@ Chessman.bylaw.p = function (x,y,map,my){
 				n++;
 				continue;
 			}else{
-				if (com.mans[map[y][i]].my!=my) d.push([i,y]);
+				if (GetColor(map[y][i])!=my) d.push([i,y]);
 				break	
 			}
 		}else{
@@ -257,7 +308,7 @@ Chessman.bylaw.p = function (x,y,map,my){
 				n++;
 				continue;
 			}else{
-				if (com.mans[map[i][x]].my!=my) d.push([x,i]);
+				if (GetColor(map[i][x])!=my) d.push([x,i]);
 				break	
 			}
 		}else{
@@ -272,39 +323,39 @@ Chessman.bylaw.p = function (x,y,map,my){
 				n++;
 				continue;
 			}else{
-				if (com.mans[map[i][x]].my!=my) d.push([x,i]);
+				if (GetColor(map[i][x])!=my) d.push([x,i]);
 				break	
 			}
 		}else{
 			if(n==0) d.push([x,i])	
 		}
 	}
+	log(d);
 	return d;
 }
 
 //卒
-Chessman.bylaw.z = function (x,y,map,my){
+Chessman.bylaw.z = function (x, y, key, map, my){
 	var d=[];
 	if (my===1){ //红方
 		//上
-		if ( y-1>= 0 && (!com.mans[map[y-1][x]] || com.mans[map[y-1][x]].my!=my)) d.push([x,y-1]);
+		if ( y-1>= 0 && (!map[y-1][x] || GetColor(map[y-1][x])!=my)) d.push([x,y-1]);
 		//右
-		if ( x+1<= 8 && y<=4  && (!com.mans[map[y][x+1]] || com.mans[map[y][x+1]].my!=my)) d.push([x+1,y]);
+		if ( x+1<= 8 && y<=4  && (!map[y][x+1] || GetColor(map[y][x+1])!=my)) d.push([x+1,y]);
 		//左
-		if ( x-1>= 0 && y<=4 && (!com.mans[map[y][x-1]] || com.mans[map[y][x-1]].my!=my))d.push([x-1,y]);
+		if ( x-1>= 0 && y<=4 && (!map[y][x-1] || GetColor(map[y][x-1])!=my))d.push([x-1,y]);
 	}else{
 		//下
-		if ( y+1<= 9  && (!com.mans[map[y+1][x]] || com.mans[map[y+1][x]].my!=my)) d.push([x,y+1]);
+		if ( y+1<= 9  && (!map[y+1][x] || GetColor(map[y+1][x])!=my)) d.push([x,y+1]);
 		//右
-		if ( x+1<= 8 && y>=6  && (!com.mans[map[y][x+1]] || com.mans[map[y][x+1]].my!=my)) d.push([x+1,y]);
+		if ( x+1<= 8 && y>=6  && (!map[y][x+1] || GetColor(map[y][x+1])!=my)) d.push([x+1,y]);
 		//左
-		if ( x-1>= 0 && y>=6 && (!com.mans[map[y][x-1]] || com.mans[map[y][x-1]].my!=my))d.push([x-1,y]);
+		if ( x-1>= 0 && y>=6 && (!map[y][x-1] || GetColor(map[y][x-1])!=my))d.push([x-1,y]);
 	}
 	
 	return d;
 }
 	
-
 Chessman.value = {
 	//车价值
 	c:[
@@ -447,3 +498,12 @@ Chessman.args = {
 	'P':{text:"炮", img:'b_p', my:-1 ,bl:"p", value:Chessman.value.P},
 	'Z':{text:"卒", img:'b_z', my:-1 ,bl:"z", value:Chessman.value.Z}
 };
+
+Chessman.create = function(x, y, key){
+	//x y坐标交换
+	//var chess = new Chessman(x, y, key);
+	var chess = new Chessman(y, x, key);
+	CONFIG.CONTAINER.CHESS[key] = chess;
+	g_sharedChessLayer.addChild(chess, 100, 100);
+	return chess;
+}

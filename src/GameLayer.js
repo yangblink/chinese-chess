@@ -3,7 +3,10 @@ var g_sharedChessLayer;			//棋盘精灵
 var GameLayer = cc.Layer.extend({
 	_board : null,
 	_style : null,
-	_map : null,
+	_map : null,		//当前的地图
+	_bfocus: false,		//当前是否选中了棋子
+	_point_map: [],
+	_focus : null,		//当前选中的棋子信息
 	ctor: function(mode){
 		this._super();
 		g_sharedGmaeLayer = this;
@@ -31,6 +34,8 @@ var GameLayer = cc.Layer.extend({
 		
 		this._map = GameLayer.arr2Clone(Map.initMap);
 		this.loadChessman(this._map);
+
+		Chesspoint.perset(style.chess_point_png);
 	},
 	loadChessman: function(map){
 		for(var x = 0; x < map.length; x++){
@@ -43,7 +48,6 @@ var GameLayer = cc.Layer.extend({
 		}
 	}
 });
-
 
 //二维数组克隆
 GameLayer.arr2Clone = function (arr){
