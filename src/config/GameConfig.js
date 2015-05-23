@@ -1,12 +1,16 @@
 var CONFIG = CONFIG || {};
 CONFIG.style = res;
 
-//
+//棋盘左下角棋子位置七点
 CONFIG.start_x = 21;
 CONFIG.start_y = 30;
-//
-CONFIG.scale = 70;
+//棋子直径
+CONFIG.scale = 71;
 
+//
+CONFIG.UNIT_TAG = {
+	//CH
+};
 
 CONFIG.CONTAINER = {
 	CHESS:{},	//保存每个棋子的精灵

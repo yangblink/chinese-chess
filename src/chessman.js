@@ -1,7 +1,7 @@
 //象棋棋子类
 var Chessman = cc.Sprite.extend({
-	_xIndex: 0,					//在二维数组中的坐标
-	_yIndex: 0,
+	xIndex: 0,					//在二维数组中的坐标
+	yIndex: 0,
 	_scale:70,
 	_key:null,
 	_chess:null,
@@ -18,13 +18,13 @@ var Chessman = cc.Sprite.extend({
 		}
 		this._chess = pater;
 		this._key = key;
-		this._xIndex = x;
-		this._yIndex = y;
+		this.xIndex = x;
+		this.yIndex = y;
 
 		this.x = x * CONFIG.scale + CONFIG.start_x;
 		this.y = (9 - y) * CONFIG.scale + CONFIG.start_y;
 
-		this.init();
+		//this.init();
 	},
 	init:function(){
 		var self = this;
@@ -52,55 +52,55 @@ var Chessman = cc.Sprite.extend({
 		cc.eventManager.addListener(listener1, this);
 	},
 	onTouch:function(){
-		if(g_sharedGmaeLayer._focus)
+/*		if(g_sharedGmaeLayer.focus)
 		{
-			var self_coord = [this._xIndex, this._yIndex];
-			log(self_coord);
-			log(g_sharedGmaeLayer._point_map);
-			log("#####");
-			if(g_sharedGmaeLayer._point_map.some(function(item){return item.toString() == self_coord.toString()}))
+			var self_coord = [this.xIndex, this.yIndex];
+			if(g_sharedGmaeLayer.point_map.some(function(item){return item.toString() == self_coord.toString()}))
 			{
 				//吃子
 				log("##eat");
 				this.visible = false;
-				var src_chess = CONFIG.CONTAINER.CHESS[g_sharedGmaeLayer._focus];
-				var actionTo = cc.moveTo(0.2, cc.p(this.x, this.y));
-				src_chess.runAction(actionTo);
-				g_sharedGmaeLayer._focus = null;
+				var src_chess = CONFIG.CONTAINER.CHESS[g_sharedGmaeLayer.focus];
 				Chesspoint.clearPoint();
+				g_sharedGmaeLayer.focus = null;
 			}
 			else
 			{
 				Chesspoint.clearPoint();
 				this.bylaw();
-				g_sharedGmaeLayer._focus = this._key;
+				g_sharedGmaeLayer.focus = this._key;
 			}
 		}
 		else
 		{
 			Chesspoint.clearPoint();
 			this.bylaw();
-			g_sharedGmaeLayer._focus = this._key;
-		}
-	},
-	bylaw:function(){
-		var pater = this._key.slice(0,1);
-		var o = Chessman.args[pater];
-		var fun = pater.toLowerCase();
-
-		var point_map = Chessman.bylaw[fun](this._xIndex, this._yIndex, this._key, g_sharedGmaeLayer._map, this._color);
-		for(var i = 0; i < point_map.length; i++){
-			var point = Chesspoint.getOrCreateChesspoint();
-			var x = point_map[i][0], y = point_map[i][1];
-			point.x =  x * CONFIG.scale + CONFIG.start_x;
-			point.y = (9 - y) * CONFIG.scale + CONFIG.start_y;
-			point.visible = true;
-			point.active = true;
-		}
-		g_sharedGmaeLayer._point_map = point_map;
+			g_sharedGmaeLayer.focus = this._key;
+		}*/
 	}
 });
+Chessman.prototype.setIndex = function(x, y){
+	this.xIndex = x;
+	this.yIndex = y;
+	this.x =  x * CONFIG.scale + CONFIG.start_x;
+	this.y = (9 - y) * CONFIG.scale + CONFIG.start_y;
+}
+Chessman.prototype.bylaw = function(){
+	var pater = this._key.slice(0,1);
+	var o = Chessman.args[pater];
+	var fun = pater.toLowerCase();
 
+	var point_map = Chessman.bylaw[fun](this.xIndex, this.yIndex, this._key, g_sharedGmaeLayer.map, this._color);
+	return point_map;
+/*	for(var i = 0; i < point_map.length; i++){
+		var point = Chesspoint.getOrCreateChesspoint();
+		var x = point_map[i][0], y = point_map[i][1];
+		point.visible = true;
+		point.active = true;
+		point.setIndex(x, y);
+	}
+	g_sharedGmaeLayer.point_map = point_map;*/
+}
 var GetColor = function(key){
 	if(CONFIG.CONTAINER.CHESS[key])
 		return CONFIG.CONTAINER.CHESS[key]._color;
@@ -330,7 +330,6 @@ Chessman.bylaw.p = function (x, y, key, map, my){
 			if(n==0) d.push([x,i])	
 		}
 	}
-	log(d);
 	return d;
 }
 
@@ -502,7 +501,7 @@ Chessman.args = {
 Chessman.create = function(x, y, key){
 	//x y坐标交换
 	//var chess = new Chessman(x, y, key);
-	var chess = new Chessman(y, x, key);
+	var chess = new Chessman(x, y, key);
 	CONFIG.CONTAINER.CHESS[key] = chess;
 	g_sharedChessLayer.addChild(chess, 100, 100);
 	return chess;
