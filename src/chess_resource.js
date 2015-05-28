@@ -7,6 +7,21 @@ var res = {
 	chess_bg_png : "res/gameui/game_bg.png",
 	chess_point_png : "res/chessboard/qipan_dian.png",
 	chess_board_png : "res/chessboard/qipan_bg.png",
+	//按钮
+	//将军
+	check_1 : "res/check/anim_check_1.png",
+	check_2 : "res/check/anim_check_2.png",
+	check_3 : "res/check/anim_check_3.png",
+	check_4 : "res/check/anim_check_4.png",
+	check_5 : "res/check/anim_check_5.png",
+	check_6 : "res/check/anim_check_6.png",
+	check_7 : "res/check/anim_check_7.png",
+	check_8 : "res/check/anim_check_8.png",
+	check_9 : "res/check/anim_check_9.png",
+	check_10 : "res/check/anim_check_10.png",
+	check_11 : "res/check/anim_check_11.png",
+	check_12 : "res/check/anim_check_12.png",
+
 	//黑棋
 	b_z : "res/chessboard/qipan_hei_bing.png",
 	b_c : "res/chessboard/qipan_hei_che.png",
@@ -45,6 +60,19 @@ var g_chess_board_res = [
     res.r_p,
     res.r_s,
     res.r_j,
-    res.r_x
+    res.r_x,
+    //将军动画
+    res.check_1,
+    res.check_2,
+    res.check_3,
+    res.check_4,
+    res.check_5,
+    res.check_6,
+    res.check_7,
+    res.check_8,
+    res.check_9,
+    res.check_10,
+    res.check_11,
+    res.check_12
 ];
 

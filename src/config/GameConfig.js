@@ -7,14 +7,27 @@ CONFIG.start_y = 30;
 //棋子直径
 CONFIG.scale = 71;
 
-//
+//精灵绘制的层
 CONFIG.UNIT_TAG = {
-	//CH
+	CHESS_MOVE : 200,
+	CHESS : 100,
+	CHECK : 300 
 };
 
+CONFIG.COLOR = {
+	RED : 1,
+	BLACK : -1
+}
+
 CONFIG.CONTAINER = {
+	CHECK:[],	//将军动画
 	CHESS:{},	//保存每个棋子的精灵
 	POINT:[]	//保存每个点的精灵
 };
 
 CONFIG.CHESS_MANUAL = [];	//棋谱
+
+CONFIG.CHESS_TIME = {
+	CHESS_MOVE : 0.5,			//棋子移动的时间
+	CHECK_ANIM : 0.08			//将军效果显示时间
+}
