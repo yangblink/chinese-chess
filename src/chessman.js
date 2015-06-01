@@ -315,11 +315,10 @@ Chessman.bylaw.z = function (x, y, key, map, my){
 		//下
 		if ( y+1<= 9  && (!map[y+1][x] || GetColor(map[y+1][x])!=my)) d.push([x,y+1]);
 		//右
-		if ( x+1<= 8 && y>=6  && (!map[y][x+1] || GetColor(map[y][x+1])!=my)) d.push([x+1,y]);
+		if ( x+1<= 8 && y>=5  && (!map[y][x+1] || GetColor(map[y][x+1])!=my)) d.push([x+1,y]);
 		//左
-		if ( x-1>= 0 && y>=6 && (!map[y][x-1] || GetColor(map[y][x-1])!=my))d.push([x-1,y]);
-	}
-	
+		if ( x-1>= 0 && y>=5 && (!map[y][x-1] || GetColor(map[y][x-1])!=my))d.push([x-1,y]);
+     	}
 	return d;
 }
 	

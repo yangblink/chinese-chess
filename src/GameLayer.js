@@ -8,6 +8,7 @@ var GameLayer = cc.Layer.extend({
 	focus_chess : null,				//当前选中的棋子信息
 	active : false,
 	curt_color : CONFIG.COLOR.RED,  //当前执子方
+	chess_manual : null,			//棋谱
 	ctor: function(mode){
 		this._super();
 		g_sharedGmaeLayer = this;
@@ -37,12 +38,51 @@ var GameLayer = cc.Layer.extend({
 		//加载地图
 		this.map = GameLayer.arr2Clone(Map.initMap);
 		this.loadChessman(this.map);
-
+		//棋谱
+		this.chess_manual = new Chessmanual(GameLayer.arr2Clone(Map.initMap));
 		//动画初始化
 		CheckEffect.shareCheckEffect();
-
 		//初始化着点
 		Chesspoint.perset(style.chess_point_png);
+		//触摸事件
+		this.addTouchevent();
+		//菜单
+		this.addMenu();
+	},
+	addMenu: function(){
+		var regret = new cc.Sprite(this.style.game_regret);
+		var reset = new cc.Sprite(this.style.game_reset);
+		var exit = new cc.Sprite(this.style.game_menu_exit);
+
+		var regret_menu = new cc.MenuItemSprite(regret, regret, regret, this.on_menu_regret, this);
+		var reset_menu = new cc.MenuItemSprite(reset, reset, reset, this.on_menu_reset, this);
+		var exit_menu = new cc.MenuItemSprite(exit, exit, exit, this.on_menu_exit, this);
+
+		var menu = new cc.Menu(regret_menu, reset_menu, exit_menu);
+		menu.alignItemsHorizontallyWithPadding(15);
+		menu.attr({
+			x : cc.winSize.width / 2,
+			y : 50
+		});
+		this.addChild(menu, 2, 3);
+
+	},
+	on_menu_regret:function(pSender){
+		cc.log("onRegret");
+	},
+	//悔棋
+	on_menu_reset:function(pSender){
+		cc.log("onReset");
+		//电脑走的棋
+		var manual1 = this.chess_manual.get();
+		//玩家走的棋
+		var manual2 = this.chess_manual.get();
+		
+	},
+	on_menu_exit:function(pSender){
+		cc.log("onExit");
+	},
+	addTouchevent: function(){
 		////////////////////
 		//监听事件
 		var self = this;
@@ -100,10 +140,10 @@ GameLayer.prototype.onTouchBegan = function(x, y){
 	}
 	//点击在棋子上
 	if(chess_key){
-		this.focus_chess = CONFIG.CONTAINER.CHESS[chess_key];
-		if(this.curt_color == this.focus_chess.chess_color){
+		var press_key = CONFIG.CONTAINER.CHESS[chess_key];
+		if(this.curt_color == press_key.chess_color){
 			Chesspoint.clearPoint();
-			this.focus_chess = CONFIG.CONTAINER.CHESS[chess_key];
+			this.focus_chess = press_key;
 			this.drawPoint(this.focus_chess);
 			return;
 		}
@@ -112,24 +152,28 @@ GameLayer.prototype.onTouchBegan = function(x, y){
 //棋子移动完事件
 GameLayer.prototype.moveCallback = function(src_pos, dst_pos){
 	//cc.log("move done [" + x + ","+y+"]");
-	var key = this.map[dst_pos.y][dst_pos.x];
+	var clear_key = this.map[dst_pos.y][dst_pos.x];
+	var key = this.focus_chess.key;
 	//吃子
-	if(key){
-		CONFIG.CONTAINER.CHESS[key].visible = false;
+	if(clear_key){
+		CONFIG.CONTAINER.CHESS[clear_key].visible = false;
 	}
 	//重新设置map
 	this.map[src_pos.y][src_pos.x] = undefined;
-	this.map[dst_pos.y][dst_pos.x] = this.focus_chess.key;
+	this.map[dst_pos.y][dst_pos.x] = key;
 
 	this.focus_chess = null;
 	this.point_map = [];
+	//棋谱记录
+	this.chess_manual.add(this.curt_color, key, src_pos, dst_pos, clear_key);
+	//回合交换
+	this.change_color();
+	//是否北将军动画显示
+	if(this.bChecked()){
+		CheckEffect.getOrCreateExplosion();
+	}
 	this.active = false;
 
-	this.change_color();
-
-	if(this.bChecked()){
-		CheckEffect.getOrCreateExplosion();  //将军特效显示
-	}
 }
 //是否被将军
 GameLayer.prototype.bChecked = function(){
@@ -182,7 +226,6 @@ GameLayer.prototype.getChessIndex = function(x, y){
 }
 
 GameLayer.prototype.addCheckEffect = function(check){
-	//this._checkBatch.addChild(check);
 	this.board.addChild(check, CONFIG.UNIT_TAG.CHECK);
 }
 
