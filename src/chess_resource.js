@@ -10,7 +10,7 @@ var res = {
 	chess_bg_png : "res/gameui/game_bg.png",
 	chess_point_png : "res/chessboard/qipan_dian.png",
 	chess_board_png : "res/chessboard/qipan_bg.png",
-	rchess_hint_png : "res/chessboard/rchess_hint.png",
+	rchess_hint_png : "res/chessboard/bchess_hint.png",
 	//将军
 	check_1 : "res/check/anim_check_1.png",
 	check_2 : "res/check/anim_check_2.png",

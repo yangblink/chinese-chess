@@ -10,9 +10,16 @@
         "cocos2d"
     ],
     "jsList":[
-        "src/GameLayer.js",
         "src/chess_resource.js",
+        "src/config/GameConfig.js",
         "src/chess_menu.js",
-        "src/config/GameConfig.js"
+        "src/map.js",
+        "src/chess_point.js",
+        "src/chessman.js",
+        "src/check_effect.js",
+        "src/chess_manual.js",
+        "src/chess_hint.js",
+        "src/GameLayer.js"
     ]
 }
+
