@@ -21,11 +21,11 @@ Chessmanual.prototype.add = function(color, chess_name, src_pos, dst_pos, eaten_
 	obj.eaten_chess = eaten_chess ? eaten_chess : null;
 	this.manual_list.push(obj);
 	//
-	this.map[dst_pos.y][src_pos.x] = this.map[src_pos.y][src_pos.x];
+	this.map[dst_pos.y][dst_pos.x] = this.map[src_pos.y][src_pos.x];
 	this.map[src_pos.y][src_pos.x] = undefined;
 }
 
-Chessmanual.prototype.get = function(){
+Chessmanual.prototype.shift_manual = function(){
 	if(this.manual_list.length > 0){
 		var rst = this.manual_list.shift();
 		return rst;
