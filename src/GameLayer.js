@@ -50,6 +50,8 @@ var GameLayer = cc.Layer.extend({
 		this.addTouchevent();
 		//菜单
 		this.addMenu();
+		//初始化AI
+		AI.setDepth(3);
 	},
 	addMenu: function(){
 		var regret = new cc.Sprite(this.style.game_regret);
@@ -174,8 +176,27 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos){
 	if(this.bChecked()){
 		CheckEffect.getOrCreateExplosion();
 	}
-	this.active = false;
 
+	//电脑走完才可触屏
+	if(this.curt_color == CONFIG.COLOR.RED){
+		this.active = false;
+	}
+	else{
+		this.AIrun();
+	}
+	
+}
+GameLayer.prototype.AIrun = function(){
+	//AI  Test
+	var move = AI.init(Util.arr2Clone(this.map), this.curt_color);
+	var key = move.key, dstX = move.x, dstY = move.y;
+	var chess = CONFIG.CONTAINER.CHESS[key];
+	if(chess){
+		this.focus_chess = chess;
+		chess.move({"x" : dstX, "y" : dstY});
+	}else{
+		cc.log("AIrun Error!!");
+	}
 }
 //是否被将军
 GameLayer.prototype.bChecked = function(){
@@ -187,7 +208,7 @@ GameLayer.prototype.bChecked = function(){
 	var key_arr = (this.curt_color == CONFIG.COLOR.RED) ? Map.black : Map.red;
 	for(var i = 0; i < key_arr.length; i++){
 		var chess = CONFIG.CONTAINER.CHESS[key_arr[i]];
-		if(chess.visible){
+		if(chess && chess.visible){
 			var point_map = chess.bylaw();
 			if(key_arr[i] == 'p0' || key_arr[i] == 'p1'){
 				cc.log(chess.xIndex+"...."+chess.yIndex);

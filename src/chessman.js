@@ -15,6 +15,7 @@ var Chessman = cc.Sprite.extend({
 		if(pater.match(/[A-Z]/)){
 			this.chess_color = CONFIG.COLOR.BLACK;
 		}
+		this.value_table = Chessman.value[pater];		//棋子的价值表
 		this.man_name = pater;
 		this.key = key;
 		this.xIndex = x;
@@ -77,7 +78,7 @@ var GetColor = function(key){
 	if(CONFIG.CONTAINER.CHESS[key])
 		return CONFIG.CONTAINER.CHESS[key].chess_color;
 	else{
-		log("##GetColor Error :"+key);
+		cc.log("##GetColor Error :"+key);
 		return 1;
 	}
 }
