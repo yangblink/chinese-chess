@@ -4,16 +4,28 @@ var GameLayer = cc.Layer.extend({
 	board : null,
 	style : null,
 	map : null,		//当前的地图
+	original_map : null,
 	point_map: [],	
 	focus_chess : null,				//当前选中的棋子信息
 	active : false,
 	curt_color : CONFIG.COLOR.RED,  //当前执子方
 	chess_manual : null,			//棋谱
+	regret_step : 2, 				//悔棋的步数
+	bcomputer : true,			//是否人机对弈
 	ctor: function(mode){
 		this._super();
 		g_sharedGmaeLayer = this;
 		this.style = CONFIG.style;
 		this.init();
+	},
+	reset:function(){
+		this.focus_chess = null;
+		this.active = false;
+		this.curt_color = CONFIG.COLOR.RED;
+		if(this.chess_manual) this.chess_manual.reset();
+		if(CONFIG.CONTAINER.HIN) CONFIG.CONTAINER.HIN.reset();
+		this.map = Util.arr2Clone(this.original_map);
+		this.loadChessman(this.map);
 	},
 	init: function(){
 		var size = cc.winSize;
@@ -36,10 +48,11 @@ var GameLayer = cc.Layer.extend({
 		//log("#@"+this.board.getTextureRect().width+"..."+this.board.getTextureRect().height);
 
 		//加载地图
-		this.map = GameLayer.arr2Clone(Map.initMap);
+		this.original_map = Util.arr2Clone(Map.initMap);
+		this.map = Util.arr2Clone(Map.initMap);
 		this.loadChessman(this.map);
 		//棋谱
-		this.chess_manual = new Chessmanual(GameLayer.arr2Clone(Map.initMap));
+		this.chess_manual = new Chessmanual(Map.initMap);
 		//动画初始化
 		CheckEffect.shareCheckEffect();
 		//初始化着点
@@ -69,19 +82,26 @@ var GameLayer = cc.Layer.extend({
 			y : 50
 		});
 		this.addChild(menu, 2, 3);
-
 	},
 	on_menu_regret:function(pSender){
-		cc.log("onRegret");
+		if(this.active)
+			return;
+		var manual1, manual2;
+		if(1 == this.regret_step){
+			manual1 = this.chess_manual.shift_manual();
+			var key = manual1.key;
+
+		}
+		else if(2 == this.regret_step){
+			manual1 = this.chess_manual.shift_manual();
+			manual2 = this.chess_manual.shift_manual();
+		}
+
 	},
 	//悔棋
 	on_menu_reset:function(pSender){
 		cc.log("onReset");
-		//电脑走的棋
-		var manual1 = this.chess_manual.shift_manual();
-		//玩家走的棋
-		var manual2 = this.chess_manual.shift_manual();
-		
+		this.reset();
 	},
 	on_menu_exit:function(pSender){
 		cc.log("onExit");
@@ -128,7 +148,7 @@ var GameLayer = cc.Layer.extend({
 //触摸事件
 GameLayer.prototype.onTouchBegan = function(x, y){
 	if(this.active)
-		return;
+		return true;
 	var self = this;
 	//触摸点的棋盘坐标
 	var index_coord = this.getChessIndex(x, y);
@@ -140,7 +160,7 @@ GameLayer.prototype.onTouchBegan = function(x, y){
 		Chesspoint.clearPoint();
 		this.focus_chess.move(index_coord);
 		this.active = true;
-		return;
+		return true;
 	}
 	//点击在棋子上
 	if(chess_key){
@@ -149,15 +169,17 @@ GameLayer.prototype.onTouchBegan = function(x, y){
 			Chesspoint.clearPoint();
 			this.focus_chess = press_key;
 			this.drawPoint(this.focus_chess);
-			return;
+			return true;
 		}
 	}
+	return true;
 }
 //棋子移动完事件
-GameLayer.prototype.moveCallback = function(src_pos, dst_pos){
+GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key, is_regret){
 	//cc.log("move done [" + x + ","+y+"]");
+	var self = this;
 	var clear_key = this.map[dst_pos.y][dst_pos.x];
-	var key = this.focus_chess.key;
+	//var key = this.focus_chess.key;
 	//吃子
 	if(clear_key){
 		CONFIG.CONTAINER.CHESS[clear_key].visible = false;
@@ -172,8 +194,11 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos){
 	this.chess_manual.add(this.curt_color, key, src_pos, dst_pos, clear_key);
 	//回合交换
 	this.change_color();
-	//是否北将军动画显示
+
+	//是否被将军动画显示
+	var bChecked = false;
 	if(this.bChecked()){
+		bChecked = true;
 		CheckEffect.getOrCreateExplosion();
 	}
 
@@ -182,7 +207,16 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos){
 		this.active = false;
 	}
 	else{
-		this.AIrun();
+		if(bChecked){
+			var tm = CONFIG.CHESS_TIME.CHECK_ANIM * 1000 * 12 + 300;
+			//cc.log("tm# " + tm);
+			setTimeout(function(){
+				self.AIrun();
+			}, tm);
+		}
+		else{
+			this.AIrun();
+		}
 	}
 	
 }
@@ -204,7 +238,7 @@ GameLayer.prototype.bChecked = function(){
 	var key_j = (this.curt_color == CONFIG.COLOR.RED) ? "j0" : "J0";
 	var chess_j = CONFIG.CONTAINER.CHESS[key_j];
 	var coord_j = [chess_j.xIndex, chess_j.yIndex];
-	cc.log("coord_j ## " +  coord_j);
+	//cc.log("coord_j ## " +  coord_j);
 	var key_arr = (this.curt_color == CONFIG.COLOR.RED) ? Map.black : Map.red;
 	for(var i = 0; i < key_arr.length; i++){
 		var chess = CONFIG.CONTAINER.CHESS[key_arr[i]];
@@ -250,15 +284,6 @@ GameLayer.prototype.getChessIndex = function(x, y){
 
 GameLayer.prototype.addCheckEffect = function(check){
 	this.board.addChild(check, CONFIG.UNIT_TAG.CHECK);
-}
-
-//二维数组克隆
-GameLayer.arr2Clone = function (arr){
-	var newArr=[];
-	for (var i=0; i<arr.length ; i++){	
-		newArr[i] = arr[i].slice();
-	}
-	return newArr;
 }
 GameLayer.scene = function(mode){
 	var scene = new cc.Scene();

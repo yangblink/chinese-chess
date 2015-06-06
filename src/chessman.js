@@ -18,8 +18,9 @@ var Chessman = cc.Sprite.extend({
 		this.value_table = Chessman.value[pater];		//棋子的价值表
 		this.man_name = pater;
 		this.key = key;
-		this.xIndex = x;
-		this.yIndex = y;
+		// this.xIndex = x;
+		// this.yIndex = y;
+		this.setIndex(x, y);
 
 		this.x = x * CONFIG.scale + CONFIG.start_x;
 		this.y = (9 - y) * CONFIG.scale + CONFIG.start_y;
@@ -37,12 +38,19 @@ Chessman.prototype.getCoordByIndex = function(x, y){
 	return {"x": rstx, "y": rsty};
 }
 //获取棋子着点
-Chessman.prototype.bylaw = function(){
-	var pater = this.key.slice(0,1);
-	var o = Chessman.args[pater];
-	var fun = pater.toLowerCase();
+Chessman.prototype.bylaw = function(map, x, y){
+	var pater = this.man_name
+	,	fun = pater.toLowerCase()
+	,	point_map = null;
 
-	var point_map = Chessman.bylaw[fun](this.xIndex, this.yIndex, this.key, g_sharedGmaeLayer.map, this.chess_color);
+	if(map){
+		point_map = Chessman.bylaw[fun](x, y, this.key, map, this.chess_color);
+	}
+	else{
+		point_map = Chessman.bylaw[fun](this.xIndex, this.yIndex, this.key, g_sharedGmaeLayer.map, this.chess_color);
+	}
+	// var curt_map = map ? map : g_sharedGmaeLayer.map;
+	// var point_map = Chessman.bylaw[fun](this.xIndex, this.yIndex, this.key, curt_map, this.chess_color);
 	//cc.log("bylaw ##"+point_map);
 	return point_map;
 }
@@ -51,8 +59,8 @@ Chessman.prototype.bylaw = function(){
  * @param  {x,y} pos 	[移动到的位置]
  * @return {[type]}     [description]
  */
-Chessman.prototype.move = function(pos){
-	var self = this;
+Chessman.prototype.move = function(pos, bRegret){
+	var self = this, is_regret = !!bRegret;
 	//设置移动后的示意点
 	var hint = CONFIG.CONTAINER.HINT;
 	hint.setPos(self.x, self.y);
@@ -60,18 +68,21 @@ Chessman.prototype.move = function(pos){
 	var coord = this.getCoordByIndex(pos.x, pos.y);
 	this.zIndex = CONFIG.UNIT_TAG.CHESS_MOVE;
 	//cc.log("move frome["+this.xIndex+","+this.yIndex+"] to ["+pos.x+","+pos.y+"]");
+	var event_obj = {"pos" : pos, "is_regret" : is_regret};
 	var action = cc.sequence(
     	cc.moveTo(CONFIG.CHESS_TIME.CHESS_MOVE, cc.p(coord.x, coord.y)),
-    	cc.callFunc(this.moveDone, self, pos)
+    	cc.callFunc(this.moveDone, self, event_obj)
 	);
 	this.runAction(action);
 }
 //移动结束
-Chessman.prototype.moveDone =  function(node, dst_pos){
+Chessman.prototype.moveDone =  function(node, event_obj){
+	var dst_pos = event_obj.pos;
+	var is_regret = event_obj.is_regret;
 	var src_pos = {x: this.xIndex, y: this.yIndex};
 	this.zIndex = CONFIG.UNIT_TAG.CHESS;
 	this.setIndex(dst_pos.x, dst_pos.y);
-	g_sharedGmaeLayer.moveCallback(src_pos, dst_pos);
+	g_sharedGmaeLayer.moveCallback(src_pos, dst_pos, this.key, is_regret);
 }
 
 var GetColor = function(key){
@@ -207,31 +218,35 @@ Chessman.bylaw.s = function (x, y, key, map, my){
 //将
 Chessman.bylaw.j = function (x, y, key, map, my){
 	var d=[];
-	// var isNull=(function (y1,y2){
-	// 	var y1=com.mans["j0"].y;
-	// 	var x1=com.mans["J0"].x;
-	// 	var y2=com.mans["J0"].y;
-	// 	for (var i=y1-1; i>y2; i--){
-	// 		if (map[i][x1]) return false;
-	// 	}
-	// 	return true;
-	// })();
-	
 	if (my===1){ //红方
 		//下
 		if ( y+1<= 9  && (!map[y+1][x] || GetColor(map[y+1][x])!=my)) d.push([x,y+1]);
 		//上
 		if ( y-1>= 7 && (!map[y-1][x] || GetColor(map[y-1][x])!=my)) d.push([x,y-1]);
-		//老将对老将的情况
-		//if ( com.mans["j0"].x == com.mans["J0"].x &&isNull) d.push([com.mans["J0"].x,com.mans["J0"].y]);
-		
-	}else{
+		//将面对面
+		for(var i = y - 1; i >= 0; i--){
+			if(map[i][x]){
+				if(map[i][x] == 'J0'){
+					d.push([x, i]);
+				}
+				break;
+			}
+		}
+	}
+	else{
 		//下
 		if ( y+1<= 2  && (!map[y+1][x] || GetColor(map[y+1][x])!=my)) d.push([x,y+1]);
 		//上
 		if ( y-1>= 0 && (!map[y-1][x] || GetColor(map[y-1][x])!=my)) d.push([x,y-1]);
-		//老将对老将的情况
-		//if ( com.mans["j0"].x == com.mans["J0"].x &&isNull) d.push([com.mans["j0"].x,com.mans["j0"].y]);
+		//将面对面
+		for(var i = y + 1; i < 10; i++){
+			if(map[i][x]){
+				if(map[i][x] == 'j0'){
+					d.push([x, i]);
+				}
+				break;
+			}
+		}
 	}
 	//右
 	if ( x+1<= 5  && (!map[y][x+1] || GetColor(map[y][x+1])!=my)) d.push([x+1,y]);
@@ -471,10 +486,18 @@ Chessman.args = {
 };
 
 Chessman.create = function(x, y, key){
-	//x y坐标交换
-	//var chess = new Chessman(x, y, key);
-	var chess = new Chessman(x, y, key);
-	CONFIG.CONTAINER.CHESS[key] = chess;
-	g_sharedChessLayer.addChild(chess, CONFIG.UNIT_TAG.CHESS, CONFIG.UNIT_TAG.CHESS);
-	return chess;
+	var chess = CONFIG.CONTAINER.CHESS[key];
+	if(chess){
+		chess.x = x * CONFIG.scale + CONFIG.start_x;
+		chess.y = (9 - y) * CONFIG.scale + CONFIG.start_y;
+		chess.setIndex(x, y);
+		chess.visible = true;
+		return CONFIG.CONTAINER.CHESS[key];
+	}
+	else{
+		chess = new Chessman(x, y, key);
+		CONFIG.CONTAINER.CHESS[key] = chess;
+		g_sharedChessLayer.addChild(chess, CONFIG.UNIT_TAG.CHESS, CONFIG.UNIT_TAG.CHESS);
+		return chess;
+	}
 }

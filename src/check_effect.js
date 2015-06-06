@@ -1,4 +1,3 @@
-//将军特效
 var CheckEffect = cc.Sprite.extend({
     active: true,
 	ctor:function(){

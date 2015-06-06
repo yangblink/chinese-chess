@@ -4,7 +4,9 @@ var Chesshint = cc.Sprite.extend({
 		this.visible = false;
 	}
 });
-
+Chesshint.prototype.reset = function(){
+	this.visible = false;
+}
 Chesshint.prototype.setPos = function(x, y){
 	this.x = x;
 	this.y = y;
