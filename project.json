@@ -12,6 +12,7 @@
     "jsList":[
         "src/chess_resource.js",
         "src/config/GameConfig.js",
+        "src/util/util.js",
         "src/chess_menu.js",
         "src/map.js",
         "src/chess_point.js",
@@ -19,6 +20,7 @@
         "src/check_effect.js",
         "src/chess_manual.js",
         "src/chess_hint.js",
+        "src/ai.js",
         "src/GameLayer.js"
     ]
 }
