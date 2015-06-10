@@ -2,6 +2,10 @@ var res = {
 	//menu
 	menu_bg_png : "res/menuui/img_bg.png",
 	menu_single_png : "res/menuui/img_menu_single_btn.png",
+	//button
+	menu_btn_normal : "res/gameui/btn_normal.png",
+	menu_btn_down : "res/gameui/btn_clicked.png",
+
 	//game menu
 	game_regret : "res/gameui/game_regret.png",
 	game_reset : "res/gameui/game_reset.png",
@@ -44,7 +48,10 @@ var res = {
 }
 var g_menu_res = [
 	res.menu_bg_png,
-	res.menu_single_png
+	res.menu_single_png,
+	//btn
+	res.menu_btn_normal,
+	res.menu_btn_down
 ];
 var g_chess_board_res = [
     res.chess_bg_png,
@@ -68,6 +75,9 @@ var g_chess_board_res = [
     res.game_regret,
     res.game_menu_exit,
     res.rchess_hint_png,
+    //btn
+	res.menu_btn_normal,
+	res.menu_btn_down,
     //将军动画
     res.check_1,
     res.check_2,

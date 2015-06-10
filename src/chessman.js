@@ -11,19 +11,14 @@ var Chessman = cc.Sprite.extend({
 		var img = CONFIG.style[o.img];
 		this._super(img);
 
-		//log(pater + "##" + key);
 		if(pater.match(/[A-Z]/)){
 			this.chess_color = CONFIG.COLOR.BLACK;
 		}
 		this.value_table = Chessman.value[pater];		//棋子的价值表
 		this.man_name = pater;
 		this.key = key;
-		// this.xIndex = x;
-		// this.yIndex = y;
-		this.setIndex(x, y);
 
-		this.x = x * CONFIG.scale + CONFIG.start_x;
-		this.y = (9 - y) * CONFIG.scale + CONFIG.start_y;
+		this.setPos(x, y);
 	}
 });
 //设置棋子的坐标和位置
@@ -37,6 +32,13 @@ Chessman.prototype.getCoordByIndex = function(x, y){
 	var rsty = (9 - y) * CONFIG.scale + CONFIG.start_y;
 	return {"x": rstx, "y": rsty};
 }
+//设置棋子位置
+Chessman.prototype.setPos = function(x, y){
+	this.setIndex(x, y);
+	var dst_pos = this.getCoordByIndex(x, y);
+	this.x = dst_pos.x;
+	this.y = dst_pos.y;
+}
 //获取棋子着点
 Chessman.prototype.bylaw = function(map, x, y){
 	var pater = this.man_name
@@ -49,26 +51,25 @@ Chessman.prototype.bylaw = function(map, x, y){
 	else{
 		point_map = Chessman.bylaw[fun](this.xIndex, this.yIndex, this.key, g_sharedGmaeLayer.map, this.chess_color);
 	}
-	// var curt_map = map ? map : g_sharedGmaeLayer.map;
-	// var point_map = Chessman.bylaw[fun](this.xIndex, this.yIndex, this.key, curt_map, this.chess_color);
-	//cc.log("bylaw ##"+point_map);
 	return point_map;
 }
-/**
- * 棋子移动
- * @param  {x,y} pos 	[移动到的位置]
- * @return {[type]}     [description]
- */
-Chessman.prototype.move = function(pos, bRegret){
-	var self = this, is_regret = !!bRegret;
-	//设置移动后的示意点
+
+Chessman.prototype.moveSoon = function(dst_pos){
+	var hint = CONFIG.CONTAINER.HINT;
+	hint.setPos(this.x, this.y);
+	this.setPos(dst_pos.x, dst_pos.y);
+}
+//棋子移动
+Chessman.prototype.move = function(pos, regret_manual){
+	var self = this;
+	//设置移动后的轨迹点
 	var hint = CONFIG.CONTAINER.HINT;
 	hint.setPos(self.x, self.y);
 
 	var coord = this.getCoordByIndex(pos.x, pos.y);
 	this.zIndex = CONFIG.UNIT_TAG.CHESS_MOVE;
 	//cc.log("move frome["+this.xIndex+","+this.yIndex+"] to ["+pos.x+","+pos.y+"]");
-	var event_obj = {"pos" : pos, "is_regret" : is_regret};
+	var event_obj = {"pos" : pos, "regret_manual" : regret_manual};
 	var action = cc.sequence(
     	cc.moveTo(CONFIG.CHESS_TIME.CHESS_MOVE, cc.p(coord.x, coord.y)),
     	cc.callFunc(this.moveDone, self, event_obj)
@@ -78,11 +79,16 @@ Chessman.prototype.move = function(pos, bRegret){
 //移动结束
 Chessman.prototype.moveDone =  function(node, event_obj){
 	var dst_pos = event_obj.pos;
-	var is_regret = event_obj.is_regret;
+	var regret_manual = event_obj.regret_manual;
 	var src_pos = {x: this.xIndex, y: this.yIndex};
 	this.zIndex = CONFIG.UNIT_TAG.CHESS;
 	this.setIndex(dst_pos.x, dst_pos.y);
-	g_sharedGmaeLayer.moveCallback(src_pos, dst_pos, this.key, is_regret);
+	if(regret_manual){
+		g_sharedGmaeLayer.regretCallback(src_pos, dst_pos, this.key, regret_manual);
+	}
+	else{
+		g_sharedGmaeLayer.moveCallback(src_pos, dst_pos, this.key);
+	}
 }
 
 var GetColor = function(key){
@@ -101,7 +107,7 @@ Chessman.bylaw.c = function (x, y, key, map, my){
 	//左侧检索
 	for (i=x-1; i>= 0; i--){
 		if (map[y][i]) {
-			if (GetColor(map[y][i])!=my) 
+			if (GetColor(map[y][i])!=my)
 				d.push([i,y]);
 			break
 		}else{
@@ -474,7 +480,6 @@ Chessman.args = {
 	'j':{text:"将", img:'r_j', my:1 ,bl:"j", value:Chessman.value.j},
 	'p':{text:"炮", img:'r_p', my:1 ,bl:"p", value:Chessman.value.p},
 	'z':{text:"兵", img:'r_z', my:1 ,bl:"z", value:Chessman.value.z},
-
 	//蓝子
 	'C':{text:"車", img:'b_c', my:-1 ,bl:"c", value:Chessman.value.C},
 	'M':{text:"馬", img:'b_m', my:-1 ,bl:"m", value:Chessman.value.M},

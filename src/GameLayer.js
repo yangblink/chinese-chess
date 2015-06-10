@@ -12,10 +12,19 @@ var GameLayer = cc.Layer.extend({
 	chess_manual : null,			//棋谱
 	regret_step : 2, 				//悔棋的步数
 	bcomputer : true,			//是否人机对弈
-	ctor: function(mode){
+	ai_level : 3,
+	ctor: function(ai_level){
 		this._super();
 		g_sharedGmaeLayer = this;
 		this.style = CONFIG.style;
+		if(ai_level == 0){
+			this.bcomputer = false;
+			this.regret_step = 1;
+		}else{
+			this.bcomputer = true;
+			this.ai_level = ai_level;
+			this.regret_step = 2;
+		}
 		this.init();
 	},
 	reset:function(){
@@ -24,10 +33,12 @@ var GameLayer = cc.Layer.extend({
 		this.curt_color = CONFIG.COLOR.RED;
 		if(this.chess_manual) this.chess_manual.reset();
 		if(CONFIG.CONTAINER.HIN) CONFIG.CONTAINER.HIN.reset();
+		Chesspoint.clearPoint();
 		this.map = Util.arr2Clone(this.original_map);
 		this.loadChessman(this.map);
 	},
 	init: function(){
+		CONFIG.reset();
 		var size = cc.winSize;
 		var style = this.style;
 		//加载背景图片
@@ -46,13 +57,12 @@ var GameLayer = cc.Layer.extend({
 		this.addChild(this.board, 1, 2);
 		g_sharedChessLayer = this.board;
 		//log("#@"+this.board.getTextureRect().width+"..."+this.board.getTextureRect().height);
-
 		//加载地图
 		this.original_map = Util.arr2Clone(Map.initMap);
 		this.map = Util.arr2Clone(Map.initMap);
 		this.loadChessman(this.map);
 		//棋谱
-		this.chess_manual = new Chessmanual(Map.initMap);
+		this.chess_manual = new Chessmanual();
 		//动画初始化
 		CheckEffect.shareCheckEffect();
 		//初始化着点
@@ -64,7 +74,7 @@ var GameLayer = cc.Layer.extend({
 		//菜单
 		this.addMenu();
 		//初始化AI
-		AI.setDepth(3);
+		AI.setDepth(this.ai_level);
 	},
 	addMenu: function(){
 		var regret = new cc.Sprite(this.style.game_regret);
@@ -84,27 +94,46 @@ var GameLayer = cc.Layer.extend({
 		this.addChild(menu, 2, 3);
 	},
 	on_menu_regret:function(pSender){
+		cc.log("active#"+this.active + ",  regret_step#" + this.regret_step);
 		if(this.active)
 			return;
-		var manual1, manual2;
-		if(1 == this.regret_step){
-			manual1 = this.chess_manual.shift_manual();
-			var key = manual1.key;
 
-		}
-		else if(2 == this.regret_step){
-			manual1 = this.chess_manual.shift_manual();
-			manual2 = this.chess_manual.shift_manual();
+		Chesspoint.clearPoint();
+		this.focus_chess = null;
+
+		var manual1, manual2, chess;
+		if(2 == this.regret_step){
+			manual1 = this.chess_manual.pop();
+			chess = CONFIG.CONTAINER.CHESS[manual1.key];
+			chess.moveSoon(manual1.src_pos);
+			if(manual1.clear_key){
+				CONFIG.CONTAINER.CHESS[manual1.clear_key].visible = true;
+			}
+			this.map[manual1.dst_pos.y][manual1.dst_pos.x] = manual1.clear_key ? manual1.clear_key : undefined;
+			this.map[manual1.src_pos.y][manual1.src_pos.x] = manual1.key;
 		}
 
+		manual2 = this.chess_manual.pop();
+		chess = CONFIG.CONTAINER.CHESS[manual2.key];
+		this.active = true;
+		chess.move(manual2.src_pos, manual2);
+		if(manual2.clear_key){
+			CONFIG.CONTAINER.CHESS[manual2.clear_key].visible = true;
+		}
 	},
 	//悔棋
 	on_menu_reset:function(pSender){
 		cc.log("onReset");
-		this.reset();
+		//this.reset();
+		cc.LoaderScene.preload(g_chess_board_res, function() {
+			cc.director.runScene(GameLayer.scene(this.ai_level));
+		}, this);
 	},
 	on_menu_exit:function(pSender){
 		cc.log("onExit");
+		cc.LoaderScene.preload(g_chess_board_res, function() {
+			cc.director.runScene(ChessMenu.scene());
+		}, this);
 	},
 	addTouchevent: function(){
 		////////////////////
@@ -150,11 +179,11 @@ GameLayer.prototype.onTouchBegan = function(x, y){
 	if(this.active)
 		return true;
 	var self = this;
-	//触摸点的棋盘坐标
+	//触摸点的棋盘坐标	
 	var index_coord = this.getChessIndex(x, y);
-	//触摸点棋子的key
+	//触摸点坐标上的棋子
 	var chess_key = this.map[index_coord.y][index_coord.x];
-	log("touch##"+chess_key);
+	log("touch ## "+chess_key);
 	//点击在着点上
 	if(this.focus_chess && this.point_map.some(function(item){return  (item[0] == index_coord.x && item[1] == index_coord.y)})){
 		Chesspoint.clearPoint();
@@ -175,11 +204,9 @@ GameLayer.prototype.onTouchBegan = function(x, y){
 	return true;
 }
 //棋子移动完事件
-GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key, is_regret){
-	//cc.log("move done [" + x + ","+y+"]");
+GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key){
 	var self = this;
 	var clear_key = this.map[dst_pos.y][dst_pos.x];
-	//var key = this.focus_chess.key;
 	//吃子
 	if(clear_key){
 		CONFIG.CONTAINER.CHESS[clear_key].visible = false;
@@ -187,21 +214,18 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key, is_regret){
 	//重新设置map
 	this.map[src_pos.y][src_pos.x] = undefined;
 	this.map[dst_pos.y][dst_pos.x] = key;
-
 	this.focus_chess = null;
 	this.point_map = [];
 	//棋谱记录
-	this.chess_manual.add(this.curt_color, key, src_pos, dst_pos, clear_key);
+	this.chess_manual.add(key, src_pos, dst_pos, clear_key);
 	//回合交换
 	this.change_color();
-
 	//是否被将军动画显示
 	var bChecked = false;
 	if(this.bChecked()){
 		bChecked = true;
 		CheckEffect.getOrCreateExplosion();
 	}
-
 	//电脑走完才可触屏
 	if(this.curt_color == CONFIG.COLOR.RED){
 		this.active = false;
@@ -218,10 +242,23 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key, is_regret){
 			this.AIrun();
 		}
 	}
-	
+}
+GameLayer.prototype.regretCallback = function(src_pos, dst_pos, key, regret_manual){
+	cc.log(JSON.stringify(src_pos)+"##" + JSON.stringify(dst_pos));
+	this.map[dst_pos.y][dst_pos.x] = key;
+	if(regret_manual.clear_key){
+		this.map[src_pos.y][src_pos.x] = regret_manual.clear_key;
+	}else{
+		this.map[src_pos.y][src_pos.x] = undefined;
+	}
+	this.active = false;
+	if(this.regret_step == 1){
+		this.change_color();
+	}
 }
 GameLayer.prototype.AIrun = function(){
 	//AI  Test
+	cc.log("ai map :#"+ this.map);
 	var move = AI.init(Util.arr2Clone(this.map), this.curt_color);
 	var key = move.key, dstX = move.x, dstY = move.y;
 	var chess = CONFIG.CONTAINER.CHESS[key];
@@ -285,9 +322,10 @@ GameLayer.prototype.getChessIndex = function(x, y){
 GameLayer.prototype.addCheckEffect = function(check){
 	this.board.addChild(check, CONFIG.UNIT_TAG.CHECK);
 }
-GameLayer.scene = function(mode){
+//ai_level 0 表示无电脑
+GameLayer.scene = function(ai_level){
 	var scene = new cc.Scene();
-	var layer = new GameLayer(mode);
+	var layer = new GameLayer(ai_level);
 	scene.addChild(layer);
 	return scene;
 };

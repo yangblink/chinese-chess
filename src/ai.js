@@ -4,8 +4,8 @@ var AI = AI || {};
 // }
 
 AI.setDepth = function(depth){
-	//AI.treeDepth = depth;
-	AI.treeDepth = 3;
+	cc.log("AI ## " + depth);
+	AI.treeDepth = depth;
 }
 
 AI.init = function(map, my){
