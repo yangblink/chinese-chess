@@ -77,13 +77,18 @@ var GameLayer = cc.Layer.extend({
 		AI.setDepth(this.ai_level);
 	},
 	addMenu: function(){
-		var regret = new cc.Sprite(this.style.game_regret);
-		var reset = new cc.Sprite(this.style.game_reset);
-		var exit = new cc.Sprite(this.style.game_menu_exit);
+//		var regret = new cc.Sprite(this.style.game_regret);
+//		var reset = new cc.Sprite(this.style.game_reset);
+//		var exit = new cc.Sprite(this.style.game_menu_exit);
+//
+//		var regret_menu = new cc.MenuItemSprite(regret, regret, regret, this.on_menu_regret, this);
+//		var reset_menu = new cc.MenuItemSprite(reset, reset, reset, this.on_menu_reset, this);
+//		var exit_menu = new cc.MenuItemSprite(exit, exit, exit, this.on_menu_exit, this);
 
-		var regret_menu = new cc.MenuItemSprite(regret, regret, regret, this.on_menu_regret, this);
-		var reset_menu = new cc.MenuItemSprite(reset, reset, reset, this.on_menu_reset, this);
-		var exit_menu = new cc.MenuItemSprite(exit, exit, exit, this.on_menu_exit, this);
+
+		var regret_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "悔棋", this.on_menu_regret);
+		var reset_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "重来", this.on_menu_reset);
+		var exit_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "返回", this.on_menu_exit);
 
 		var menu = new cc.Menu(regret_menu, reset_menu, exit_menu);
 		menu.alignItemsHorizontallyWithPadding(15);
@@ -96,6 +101,9 @@ var GameLayer = cc.Layer.extend({
 	on_menu_regret:function(pSender){
 		cc.log("active#"+this.active + ",  regret_step#" + this.regret_step);
 		if(this.active)
+			return;
+
+		if(this.chess_manual.getStep() <= 0 )
 			return;
 
 		Chesspoint.clearPoint();
@@ -121,7 +129,7 @@ var GameLayer = cc.Layer.extend({
 			CONFIG.CONTAINER.CHESS[manual2.clear_key].visible = true;
 		}
 	},
-	//悔棋
+	//重来
 	on_menu_reset:function(pSender){
 		cc.log("onReset");
 		//this.reset();
@@ -129,6 +137,7 @@ var GameLayer = cc.Layer.extend({
 			cc.director.runScene(GameLayer.scene(this.ai_level));
 		}, this);
 	},
+	//返回
 	on_menu_exit:function(pSender){
 		cc.log("onExit");
 		cc.LoaderScene.preload(g_chess_board_res, function() {

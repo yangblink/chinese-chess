@@ -22,3 +22,7 @@ Chessmanual.prototype.pop = function(){
 		return null;
 	}
 }
+
+Chessmanual.prototype.getStep = function(){
+	return this.manual_list.length;
+}

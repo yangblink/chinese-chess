@@ -36,8 +36,8 @@ CONFIG.CONTAINER = {
 CONFIG.CHESS_MANUAL = [];	//棋谱
 
 CONFIG.CHESS_TIME = {
-	CHESS_MOVE : 1,			//棋子移动的时间
-	CHECK_ANIM : 0.08			//将军效果显示时间
+	CHESS_MOVE : 0.5,			//棋子移动的时间
+	CHECK_ANIM : 0.05			//将军效果显示时间
 }
 
 
