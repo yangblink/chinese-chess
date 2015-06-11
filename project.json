@@ -21,7 +21,8 @@
         "src/chess_manual.js",
         "src/chess_hint.js",
         "src/ai.js",
-        "src/GameLayer.js"
+        "src/GameLayer.js",
+        "src/button.js"
     ]
 }
 
