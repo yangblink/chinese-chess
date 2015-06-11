@@ -1,6 +1,6 @@
 var res = {
 	//menu
-	menu_bg_png : "res/menuui/img_bg.png",
+	menu_bg_png : "res/menuui/bg_1.jpg",
 	menu_single_png : "res/menuui/img_menu_single_btn.png",
 	//button
 	menu_btn_normal : "res/gameui/btn_normal.png",
