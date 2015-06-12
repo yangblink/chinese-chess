@@ -1,17 +1,16 @@
 var AI = AI || {};
-// var AI = function(depth){
-// 	AI.treeDepth = depth;
-// }
+
+//AI.evaluateCount = 0;
 
 AI.setDepth = function(depth){
 	cc.log("AI ## " + depth);
-	AI.treeDepth = depth;
+	AI.treeDepth = depth ? depth : 3;
 }
 
 AI.init = function(map, my){
 	var val=AI.getAlphaBeta(-99999 ,99999, AI.treeDepth, map, my);
 
-	cc.log("AI init ## " + JSON.stringify(val));
+	cc.log("AI result ## " + JSON.stringify(val));
 	return val;
 }
 
@@ -28,6 +27,7 @@ AI.evaluate = function(map, my){
 			}
 		}
 	}
+	//AI.evaluateCount++;
 	return val;
 }
 AI.getMoves = function(map, my){

@@ -77,26 +77,18 @@ var GameLayer = cc.Layer.extend({
 		AI.setDepth(this.ai_level);
 	},
 	addMenu: function(){
-//		var regret = new cc.Sprite(this.style.game_regret);
-//		var reset = new cc.Sprite(this.style.game_reset);
-//		var exit = new cc.Sprite(this.style.game_menu_exit);
-//
-//		var regret_menu = new cc.MenuItemSprite(regret, regret, regret, this.on_menu_regret, this);
-//		var reset_menu = new cc.MenuItemSprite(reset, reset, reset, this.on_menu_reset, this);
-//		var exit_menu = new cc.MenuItemSprite(exit, exit, exit, this.on_menu_exit, this);
+		var regret_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "悔棋", this.on_menu_regret.bind(this));
+		regret_menu.setPos(100, 50);
 
+		var reset_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "重来", this.on_menu_reset.bind(this));
+		reset_menu.setPos(cc.winSize.width / 2, 50);
 
-		var regret_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "悔棋", this.on_menu_regret);
-		var reset_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "重来", this.on_menu_reset);
-		var exit_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "返回", this.on_menu_exit);
+		var exit_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "返回", this.on_menu_exit.bind(this));
+		exit_menu.setPos(cc.winSize.width - 100, 50);
 
-		var menu = new cc.Menu(regret_menu, reset_menu, exit_menu);
-		menu.alignItemsHorizontallyWithPadding(15);
-		menu.attr({
-			x : cc.winSize.width / 2,
-			y : 50
-		});
-		this.addChild(menu, 2, 3);
+		this.addChild(regret_menu);
+		this.addChild(reset_menu);
+		this.addChild(exit_menu);
 	},
 	on_menu_regret:function(pSender){
 		cc.log("active#"+this.active + ",  regret_step#" + this.regret_step);
@@ -131,10 +123,10 @@ var GameLayer = cc.Layer.extend({
 	},
 	//重来
 	on_menu_reset:function(pSender){
-		cc.log("onReset");
-		//this.reset();
+		var self = this;
+		cc.log("onReset #" + self.ai_level);
 		cc.LoaderScene.preload(g_chess_board_res, function() {
-			cc.director.runScene(GameLayer.scene(this.ai_level));
+			cc.director.runScene(GameLayer.scene(self.ai_level));
 		}, this);
 	},
 	//返回
