@@ -18,6 +18,7 @@
         "src/chess_point.js",
         "src/chessman.js",
         "src/check_effect.js",
+        "src/animation_effect.js",
         "src/chess_manual.js",
         "src/chess_hint.js",
         "src/ai.js",
