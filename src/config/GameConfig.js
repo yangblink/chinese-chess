@@ -43,6 +43,10 @@ CONFIG.CHESS_TIME = {
 
 CONFIG.reset = function(){
 	CONFIG.CONTAINER = {
+		EFFECT:{
+			CHECK:{},			//将军
+			KILL:{}				//绝杀
+		},
 		CHECK:[],	//将军动画
 		CHESS:{},	//保存每个棋子的精灵
 		HINT:null,	//棋子移动后的图标

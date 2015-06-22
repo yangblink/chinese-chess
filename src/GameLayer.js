@@ -64,7 +64,11 @@ var GameLayer = cc.Layer.extend({
 		//棋谱
 		this.chess_manual = new Chessmanual();
 		//动画初始化
-		CheckEffect.shareCheckEffect();
+		//CheckEffect.shareCheckEffect();
+		//将军特效初始化
+		Animation_Effect.initEffect(g_effect_check, cc.rect(0, 0, 332, 332), "check");
+		Animation_Effect.initEffect(g_effect_kill, cc.rect(0, 0, 332, 332), "kill");
+
 		//初始化着点
 		Chesspoint.perset(style.chess_point_png);
 		//初始化示意点
@@ -225,7 +229,9 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key){
 	var bChecked = false;
 	if(this.bChecked()){
 		bChecked = true;
-		CheckEffect.getOrCreateExplosion();
+		//CheckEffect.getOrCreateExplosion();
+		//Animation_Effect.getOrCreateExplosion("check");
+		Animation_Effect.getOrCreateExplosion("kill");
 	}
 	//电脑走完才可触屏
 	if(this.curt_color == CONFIG.COLOR.RED){

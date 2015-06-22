@@ -28,6 +28,21 @@ var res = {
 	check_10 : "res/check/anim_check_10.png",
 	check_11 : "res/check/anim_check_11.png",
 	check_12 : "res/check/anim_check_12.png",
+	//绝杀
+	kill_1 : "res/check/anim_kill_1.png",
+	kill_2 : "res/check/anim_kill_2.png",
+	kill_3 : "res/check/anim_kill_3.png",
+	kill_4 : "res/check/anim_kill_4.png",
+	kill_5 : "res/check/anim_kill_5.png",
+	kill_6 : "res/check/anim_kill_6.png",
+	kill_7 : "res/check/anim_kill_7.png",
+	kill_8 : "res/check/anim_kill_8.png",
+	kill_9 : "res/check/anim_kill_9.png",
+	kill_10 : "res/check/anim_kill_10.png",
+	kill_11 : "res/check/anim_kill_11.png",
+	kill_12 : "res/check/anim_kill_12.png",
+	kill_13 : "res/check/anim_kill_13.png",
+	kill_14 : "res/check/anim_kill_14.png",
 	//黑棋
 	b_z : "res/chessboard/qipan_hei_bing.png",
 	b_c : "res/chessboard/qipan_hei_che.png",
@@ -52,6 +67,36 @@ var g_menu_res = [
 	//btn
 	res.menu_btn_normal,
 	res.menu_btn_down
+];
+var g_effect_check = [
+	res.check_1,
+    res.check_2,
+    res.check_3,
+    res.check_4,
+    res.check_5,
+    res.check_6,
+    res.check_7,
+    res.check_8,
+    res.check_9,
+    res.check_10,
+    res.check_11,
+    res.check_12
+];
+var g_effect_kill = [
+	res.kill_1,
+	res.kill_2,
+	res.kill_3,
+	res.kill_4,
+	res.kill_5,
+	res.kill_6,
+	res.kill_7,
+	res.kill_8,
+	res.kill_9,
+	res.kill_10,
+	res.kill_11,
+	res.kill_12,
+	res.kill_13,
+	res.kill_14
 ];
 var g_chess_board_res = [
     res.chess_bg_png,
@@ -78,6 +123,21 @@ var g_chess_board_res = [
     //btn
 	res.menu_btn_normal,
 	res.menu_btn_down,
+	//绝杀
+	res.kill_1,
+	res.kill_2,
+	res.kill_3,
+	res.kill_4,
+	res.kill_5,
+	res.kill_6,
+	res.kill_7,
+	res.kill_8,
+	res.kill_9,
+	res.kill_10,
+	res.kill_11,
+	res.kill_12,
+	res.kill_13,
+	res.kill_14,
     //将军动画
     res.check_1,
     res.check_2,
