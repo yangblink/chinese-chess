@@ -7,6 +7,61 @@ AI.setDepth = function(depth){
 	AI.treeDepth = depth ? depth : 3;
 }
 
+AI.status = {
+	NONE : 0,			//无状态
+	CHECK : 1,			//将军
+	KILL : 2			//绝杀
+}
+
+//判断当前棋盘状态 将军 | 绝杀   my为北将军一方
+AI.borad_status = function(map, my){
+	var status = AI.status.NONE;
+	if(AI.bcheck(map, my)){
+		status = AI.status.CHECK;
+	}
+	if(status == AI.status.CHECK && AI.bkill(map, -my)){
+		status = AI.status.KILL;
+	}
+	cc.log("borad_status ## " + status);
+	return status;
+}
+//是否将军
+AI.bcheck = function(map, my){
+	var king_pos = AI.getKingPos(my);
+	var moves = AI.getMoves(map, -my);
+	cc.log("!!!!!!!!!!!!!!!!");
+	cc.log(moves);
+	cc.log(king_pos);
+	if(moves.some(function(item){return item[0] == king_pos[0] && item[1] == king_pos[1]}))
+		return true;
+	else
+		return false;
+}
+//是否绝杀
+AI.bkill = function(map, my){
+	var moves = AI.getMoves(map, my);
+	for(var i = 0; i<moves.length; i++){
+		var move = moves[i], key = move[4], oldX = move[0], oldY = move[1], newX = move[2], newY = move[3], clearKey = map[newY][newX] || undefined;
+		map[newY][newX] = key;
+		map[oldY][oldX] = undefined;
+
+		if(!AI.bcheck(map, -my))
+			return false;
+
+		map[oldY][oldX] = key;
+		map[newY][newX] = clearKey;
+	}
+	return true;
+}
+//获取将军位置
+AI.getKingPos = function(my){
+	var king = my == 1 ? "J0" : "j0";
+	var king_chess = CONFIG.CONTAINER.CHESS[king];
+	var king_pos = [king_chess.xIndex, king_chess.yIndex];
+	//cc.log("king pos :" + king_pos);
+	return king_pos;
+}
+
 AI.init = function(map, my){
 	var val=AI.getAlphaBeta(-99999 ,99999, AI.treeDepth, map, my);
 
@@ -39,6 +94,7 @@ AI.getMoves = function(map, my){
 				var chess = CONFIG.CONTAINER.CHESS[key];
 				if (chess.chess_color != my)
 					continue;
+				cc.log(key);
 				var point_map = chess.bylaw(map, j, i);
 				for(var n=0; n < point_map.length; n++){
 					moves.push([j, i, point_map[n][0], point_map[n][1], key]);

@@ -226,28 +226,44 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key){
 	//回合交换
 	this.change_color();
 	//是否被将军动画显示
-	var bChecked = false;
-	if(this.bChecked()){
-		bChecked = true;
-		//CheckEffect.getOrCreateExplosion();
-		//Animation_Effect.getOrCreateExplosion("check");
+	// var bChecked = false;
+	// if(this.bChecked()){
+	// 	bChecked = true;
+	// 	//CheckEffect.getOrCreateExplosion();
+	// 	//Animation_Effect.getOrCreateExplosion("check");
+	// 	Animation_Effect.getOrCreateExplosion("kill");
+	// }
+	// //电脑走完才可触屏
+	// if(this.curt_color == CONFIG.COLOR.RED){
+	// 	this.active = false;
+	// }
+	// else{
+	// 	if(bChecked){
+	// 		var tm = CONFIG.CHESS_TIME.CHECK_ANIM * 1000 * 12 + 300;
+	// 		//cc.log("tm# " + tm);
+	// 		setTimeout(function(){
+	// 			self.AIrun();
+	// 		}, tm);
+	// 	}
+	// 	else{
+	// 		this.AIrun();
+	// 	}
+	// }
+
+	var board_status = AI.borad_status(this.map, this.curt_color);
+	if(board_status == AI.status.CHECK){
+		Animation_Effect.getOrCreateExplosion("check");
+	}
+	else if(board_status == AI.status.KILL){
 		Animation_Effect.getOrCreateExplosion("kill");
 	}
-	//电脑走完才可触屏
+
+
 	if(this.curt_color == CONFIG.COLOR.RED){
 		this.active = false;
 	}
 	else{
-		if(bChecked){
-			var tm = CONFIG.CHESS_TIME.CHECK_ANIM * 1000 * 12 + 300;
-			//cc.log("tm# " + tm);
-			setTimeout(function(){
-				self.AIrun();
-			}, tm);
-		}
-		else{
-			this.AIrun();
-		}
+		this.AIrun();
 	}
 }
 GameLayer.prototype.regretCallback = function(src_pos, dst_pos, key, regret_manual){
