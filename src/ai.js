@@ -14,48 +14,59 @@ AI.status = {
 }
 
 //判断当前棋盘状态 将军 | 绝杀   my为北将军一方
-AI.borad_status = function(map, my){
+AI.borad_status = function(map, other){
 	var status = AI.status.NONE;
-	if(AI.bcheck(map, my)){
+	var my = -other;
+	if(AI.bcheck(map, other)){
 		status = AI.status.CHECK;
 	}
-	if(status == AI.status.CHECK && AI.bkill(map, -my)){
+	if(/*status == AI.status.CHECK &&*/ AI.bkill(map, other)){
 		status = AI.status.KILL;
 	}
 	cc.log("borad_status ## " + status);
 	return status;
 }
 //是否将军
-AI.bcheck = function(map, my){
-	var king_pos = AI.getKingPos(my);
-	var moves = AI.getMoves(map, -my);
-	cc.log("!!!!!!!!!!!!!!!!");
-	cc.log(moves);
-	cc.log(king_pos);
-	if(moves.some(function(item){return item[0] == king_pos[0] && item[1] == king_pos[1]}))
+AI.bcheck = function(map, other, pos){
+	//var king_pos = AI.getKingPos(other);
+	var king_pos = pos ? pos : AI.getKingPos(other);
+	var my = -other;
+	var moves = AI.getMoves(map, my);
+	// cc.log("!!!!!!!!!!!!!!!!");
+	// cc.log(moves);
+	// cc.log(king_pos);
+	if(moves.some(function(item){return item[2] == king_pos[0] && item[3] == king_pos[1]}))
 		return true;
 	else
 		return false;
 }
 //是否绝杀
-AI.bkill = function(map, my){
-	var moves = AI.getMoves(map, my);
+AI.bkill = function(map, other){
+	var moves = AI.getMoves(map, other);
+	var bkill = true;
 	for(var i = 0; i<moves.length; i++){
 		var move = moves[i], key = move[4], oldX = move[0], oldY = move[1], newX = move[2], newY = move[3], clearKey = map[newY][newX] || undefined;
 		map[newY][newX] = key;
 		map[oldY][oldX] = undefined;
-
-		if(!AI.bcheck(map, -my))
-			return false;
-
+		var pos = null;
+		if(key == 'J0' || key == 'j0'){
+			pos = [newX, newY];
+		}
+		// cc.log("#################");
+		// cc.log(move);
+		if(!AI.bcheck(map, other, pos)){
+			bkill = false;
+		}
 		map[oldY][oldX] = key;
 		map[newY][newX] = clearKey;
+		if(!bkill)
+			break;
 	}
-	return true;
+	return bkill;
 }
 //获取将军位置
 AI.getKingPos = function(my){
-	var king = my == 1 ? "J0" : "j0";
+	var king = my == 1 ? "j0" : "J0";
 	var king_chess = CONFIG.CONTAINER.CHESS[king];
 	var king_pos = [king_chess.xIndex, king_chess.yIndex];
 	//cc.log("king pos :" + king_pos);
@@ -94,7 +105,6 @@ AI.getMoves = function(map, my){
 				var chess = CONFIG.CONTAINER.CHESS[key];
 				if (chess.chess_color != my)
 					continue;
-				cc.log(key);
 				var point_map = chess.bylaw(map, j, i);
 				for(var n=0; n < point_map.length; n++){
 					moves.push([j, i, point_map[n][0], point_map[n][1], key]);
