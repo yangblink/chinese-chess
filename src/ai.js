@@ -1,10 +1,11 @@
 var AI = AI || {};
 
-//AI.evaluateCount = 0;
-
-AI.setDepth = function(depth){
-	cc.log("AI ## " + depth);
+//初始化AI  设置AI遍历深度  和当前使用的起始地图(根据起始地图设置开局库)
+AI.init = function(depth, aiMap){
+	cc.log("AI ## " + depth + "..." + aiMap);
 	AI.treeDepth = depth ? depth : 3;
+	AI.gambit = aiMap ? aiMap : Gambit;
+	AI.historyBill = null;
 }
 
 AI.status = {
@@ -13,7 +14,7 @@ AI.status = {
 	KILL : 2			//绝杀
 }
 
-//判断当前棋盘状态 将军 | 绝杀   my为北将军一方
+//判断当前棋盘状态 将军 | 绝杀   my为被将军一方
 AI.borad_status = function(map, other){
 	var status = AI.status.NONE;
 	var my = -other;
@@ -73,11 +74,37 @@ AI.getKingPos = function(my){
 	return king_pos;
 }
 
-AI.init = function(map, my){
-	var val=AI.getAlphaBeta(-99999 ,99999, AI.treeDepth, map, my);
 
+AI.getNextStep = function(map, my, pace){
+	cc.log("inAi  pace ### " + pace);
+	var bill = AI.historyBill || AI.gambit;
+	if(bill && bill.length > 0 && pace.length > 0){
+		var paceLen = pace.length, arr = [];
+		for(var i = 0, len = bill.length; i < len; i++){
+			if(bill[i].slice(0, paceLen) == pace){
+				arr.push(bill[i]);
+			}
+		}
+		if(arr.length){
+			var inx=Math.floor( Math.random() * arr.length );
+			AI.historyBill = arr;
+			cc.log("gambit !!!!!!!!!!!!!!" + arr[inx].slice(paceLen, paceLen+4).split("") + " ####" + inx);
+			return arr[inx].slice(paceLen, paceLen+4).split("");
+		}
+	}
+
+	var val=AI.getAlphaBeta(-99999 ,99999, AI.treeDepth, map, my);
 	cc.log("AI result ## " + JSON.stringify(val));
-	return val;
+	if (!val || val.value == -8888){
+		AI.treeDepth = 2;
+		val = AI.getAlphaBeta(-99999 ,99999, AI.treeDepth, map, my);
+	}
+
+	var key = val.key;
+	var chess = CONFIG.CONTAINER.CHESS[key];
+	return [chess.xIndex, chess.yIndex, val.x, val.y];
+
+	//return val;
 }
 
 //局面评估函数
@@ -89,11 +116,9 @@ AI.evaluate = function(map, my){
 			if (key){
 				var chess = CONFIG.CONTAINER.CHESS[key];
 				val += chess.value_table[i][n] * chess.chess_color;
-				//val += play.mans[key].value[i][n] * play.mans[key].my;
 			}
 		}
 	}
-	//AI.evaluateCount++;
 	return val;
 }
 AI.getMoves = function(map, my){
@@ -149,13 +174,10 @@ AI.getAlphaBeta = function (A, B, depth, map ,my){
 				if(AI.treeDepth == depth)
 					rootKey = {"key":key,"x":newX,"y":newY,"value":A};
 			}
-
 		}
-
 	}
-
 	if(AI.treeDepth == depth){
-		cc.log(AI.treeDepth + "#" + JSON.stringify(rootKey));
+		//cc.log(AI.treeDepth + "#" + JSON.stringify(rootKey));
 		return rootKey ? rootKey : false;
 	}
 	return {"key":key,"x":newX,"y":newY,"value":A}; 

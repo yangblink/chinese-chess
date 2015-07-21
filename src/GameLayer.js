@@ -11,8 +11,9 @@ var GameLayer = cc.Layer.extend({
 	curt_color : CONFIG.COLOR.RED,  //当前执子方
 	chess_manual : null,			//棋谱
 	regret_step : 2, 				//悔棋的步数
-	bcomputer : true,			//是否人机对弈
+	bcomputer : true,				//是否人机对弈
 	ai_level : 3,
+	pace : "",						//当前的棋谱步数  like : 774770627967807089797276666512422625000119270171
 	ctor: function(ai_level){
 		this._super();
 		g_sharedGmaeLayer = this;
@@ -53,7 +54,7 @@ var GameLayer = cc.Layer.extend({
 		this.board.attr({
 			x : size.width / 2,
 			y : size.height / 2 + 50
-		}); 
+		});
 		this.addChild(this.board, 1, 2);
 		g_sharedChessLayer = this.board;
 		//log("#@"+this.board.getTextureRect().width+"..."+this.board.getTextureRect().height);
@@ -68,7 +69,6 @@ var GameLayer = cc.Layer.extend({
 		//将军特效初始化
 		Animation_Effect.initEffect(g_effect_check, cc.rect(0, 0, 332, 332), "check");
 		Animation_Effect.initEffect(g_effect_kill, cc.rect(0, 0, 332, 332), "kill");
-
 		//初始化着点
 		Chesspoint.perset(style.chess_point_png);
 		//初始化示意点
@@ -78,7 +78,7 @@ var GameLayer = cc.Layer.extend({
 		//菜单
 		this.addMenu();
 		//初始化AI
-		AI.setDepth(this.ai_level);
+		AI.init(this.ai_level);
 	},
 	addMenu: function(){
 		var regret_menu = new Button.create(CONFIG.BTN_SIZE.MENU_X, CONFIG.BTN_SIZE.MENU_Y, "悔棋", this.on_menu_regret.bind(this));
@@ -94,6 +94,7 @@ var GameLayer = cc.Layer.extend({
 		this.addChild(reset_menu);
 		this.addChild(exit_menu);
 	},
+	//悔棋
 	on_menu_regret:function(pSender){
 		cc.log("active#"+this.active + ",  regret_step#" + this.regret_step);
 		if(this.active)
@@ -124,6 +125,9 @@ var GameLayer = cc.Layer.extend({
 		if(manual2.clear_key){
 			CONFIG.CONTAINER.CHESS[manual2.clear_key].visible = true;
 		}
+
+		//悔棋记录的棋谱也撤销
+		this.pace = this.pace.slice(0, this.pace.length - 4 * this.regret_step);
 	},
 	//重来
 	on_menu_reset:function(pSender){
@@ -184,7 +188,7 @@ GameLayer.prototype.onTouchBegan = function(x, y){
 	if(this.active)
 		return true;
 	var self = this;
-	//触摸点的棋盘坐标	
+	//触摸点的棋盘坐标
 	var index_coord = this.getChessIndex(x, y);
 	//触摸点坐标上的棋子
 	var chess_key = this.map[index_coord.y][index_coord.x];
@@ -225,30 +229,6 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key){
 	this.chess_manual.add(key, src_pos, dst_pos, clear_key);
 	//回合交换
 	this.change_color();
-	//是否被将军动画显示
-	// var bChecked = false;
-	// if(this.bChecked()){
-	// 	bChecked = true;
-	// 	//CheckEffect.getOrCreateExplosion();
-	// 	//Animation_Effect.getOrCreateExplosion("check");
-	// 	Animation_Effect.getOrCreateExplosion("kill");
-	// }
-	// //电脑走完才可触屏
-	// if(this.curt_color == CONFIG.COLOR.RED){
-	// 	this.active = false;
-	// }
-	// else{
-	// 	if(bChecked){
-	// 		var tm = CONFIG.CHESS_TIME.CHECK_ANIM * 1000 * 12 + 300;
-	// 		//cc.log("tm# " + tm);
-	// 		setTimeout(function(){
-	// 			self.AIrun();
-	// 		}, tm);
-	// 	}
-	// 	else{
-	// 		this.AIrun();
-	// 	}
-	// }
 
 	var board_status = AI.borad_status(this.map, this.curt_color);
 	if(board_status == AI.status.CHECK){
@@ -258,12 +238,13 @@ GameLayer.prototype.moveCallback = function(src_pos, dst_pos, key){
 		Animation_Effect.getOrCreateExplosion("kill");
 	}
 
-
 	if(this.curt_color == CONFIG.COLOR.RED){
 		this.active = false;
 	}
 	else{
-		this.AIrun();
+		var pace = "" + src_pos.x + src_pos.y + dst_pos.x+dst_pos.y;
+		//cc.log("pace ##" + pace);
+		this.AIrun(pace);
 	}
 }
 GameLayer.prototype.regretCallback = function(src_pos, dst_pos, key, regret_manual){
@@ -279,18 +260,22 @@ GameLayer.prototype.regretCallback = function(src_pos, dst_pos, key, regret_manu
 		this.change_color();
 	}
 }
-GameLayer.prototype.AIrun = function(){
-	//AI  Test
-	cc.log("ai map :#"+ this.map);
-	var move = AI.init(Util.arr2Clone(this.map), this.curt_color);
-	var key = move.key, dstX = move.x, dstY = move.y;
+GameLayer.prototype.AIrun = function(pace){
+	this.pace += pace;
+	var move = AI.getNextStep(Util.arr2Clone(this.map), this.curt_color, this.pace);
+	var key = this.map[move[1]][move[0]], dstX = move[2], dstY = move[3];
 	var chess = CONFIG.CONTAINER.CHESS[key];
+	cc.log("AIrun key :" + key);
 	if(chess){
+		this.pace +=  "" + chess.xIndex + chess.yIndex + dstX + dstY;
+		cc.log("pace ##" + this.pace);
 		this.focus_chess = chess;
 		chess.move({"x" : dstX, "y" : dstY});
-	}else{
+	}
+	else{
 		cc.log("AIrun Error!!");
 	}
+
 }
 //是否被将军
 GameLayer.prototype.bChecked = function(){
